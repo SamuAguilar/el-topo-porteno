@@ -1,3 +1,29 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Variables globales del design system */
+:root {
+  --color-bg:          #0B0B0B;
+  --color-bg-secondary:#1F2937;
+  --color-border:      #374151;
+  --color-muted:       #6B7280;
+  --color-accent:      #F59E0B;
+  --color-accent-dark: #D97706;
+  --color-white:       #FFFFFF;
+}
+
+/* Reset base */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-white);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 0;
+}
