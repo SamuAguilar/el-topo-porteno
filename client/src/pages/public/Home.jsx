@@ -1,8 +1,6 @@
-import Header from "../../components/layout/Header";
 import Hero from "../../components/settings/Hero";
 import Features from "../../components/settings/Features";
 import FAQ from "../../components/settings/FAQ";
-import Footer from "../../components/layout/Footer";
 import Button from "../../components/ui/Button";
 import Card from "../../components/ui/Card";
 import Input from "../../components/ui/Input";
@@ -10,7 +8,6 @@ import Input from "../../components/ui/Input";
 export default function Home() {
   return (
     <>
-      <Header />
       <Hero />
       <Features />
       <FAQ />
@@ -72,8 +69,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      <Footer />
     </>
   );
 }

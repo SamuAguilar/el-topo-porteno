@@ -9,7 +9,7 @@ export default function Header() {
       <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-3">
-          <img src={logo} alt="El Topo Porteño" className="h-12 w-12 object-contain" />
+          <img src={logo} alt="El Topo Porteño" className="h-24 w-24 object-contain" />
           <span className="text-white font-bold text-lg leading-tight">
             El Topo<br />
             <span className="text-[#F59E0B]">Porteño</span>
@@ -31,7 +31,7 @@ export default function Header() {
           rel="noreferrer"
           className="hidden md:inline-flex items-center gap-2 bg-[#F59E0B] hover:bg-[#D97706] text-black font-bold px-5 py-2 rounded transition"
         >
-          <span>📞</span> Llamanos
+          <span>📞</span> Llamános {/* El número aún no está definido */}
         </a>
 
         {/* Hamburger mobile */}

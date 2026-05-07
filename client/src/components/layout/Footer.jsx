@@ -44,7 +44,7 @@ export default function Footer() {
                 💬 WhatsApp
               </a>
             </li>
-            <li>📞 +54 11 0000-0000</li>
+            <li>📞 +54 11 0000-0000</li> {/* El número aún no está definido */}
           </ul>
         </div>
       </div>
