@@ -40,6 +40,9 @@ client/
 │            ├── Button.jsx       # 4 variantes × 3 tamaños
 │            ├── Card.jsx         # 3 variantes con icon y subtitle opcionales
 │            └── Input.jsx        # Con label, error y tipo configurable
+│   ├── layouts/
+│       └── AdminLayout.jsx      # Estructuración a las páginas de admin
+│       └── PublicLayout.jsx     # Layout de Home.jsx, página pública
 │   ├── pages/
 │   │   ├── public/
 │   │   │   └── Home.jsx         # Landing page + showcase de componentes
@@ -102,15 +105,7 @@ Props opcionales: `icon`, `subtitle`
 
 ## Objetivos alcanzados en esta fase
 
-- ✅ Landing page completa: Header, Hero, Servicios, FAQ y Footer
-- ✅ Contenido real del proyecto (El Topo Porteño, servicios de excavación)
-- ✅ Design system con paleta, tipografía y variables CSS globales
-- ✅ Componentes reutilizables con múltiples variantes (Button, Card, Input)
-- ✅ Catálogo de componentes (showcase) al final de la landing
-- ✅ Navegación responsive con menú hamburguesa en mobile
-- ✅ FAQ con acordeón interactivo (useState)
-- ✅ Rutas configuradas con React Router DOM (`/`, `/admin`, `/admin/dashboard`)
-- ✅ Arquitectura modular lista para escalar al panel administrativo
+- ✅ Agregar rutas implementadas
 
 ---
 
