@@ -39,7 +39,39 @@ const getLeads = async (req, res) => {
     }
 };
 
+// cambia el estado de un lead especifico
+const updateLeadStatus = async (req, res) => {
+    try {
+        const { id } = req.params; // el id viene en la url
+        const { estado } = req.body; // el estado viene en el json
+
+        // validamos que el estado sea uno de los permitidos segun el der
+        const estadosValidos = ['Nuevo', 'Contactado', 'Cerrado exitoso', 'Cerrado no concretado'];
+        if (!estadosValidos.includes(estado)) {
+            return res.status(400).json({ error: 'Estado no valido' });
+        }
+
+        // ejecutamos la actualizacion
+        const [result] = await pool.query(
+            'UPDATE leads SET estado = ? WHERE id = ?',
+            [estado, id]
+        );
+
+        // si no afecto filas es porque el id no existe
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Lead no encontrado' });
+        }
+
+        res.json({ mensaje: 'Estado actualizado correctamente' });
+
+    } catch (error) {
+        console.error('Fallo al actualizar estado del lead:', error);
+        res.status(500).json({ error: 'Fallo interno del servidor' });
+    }
+};
+
 module.exports = {
     createLead,
-    getLeads
+    getLeads,
+    updateLeadStatus
 };
