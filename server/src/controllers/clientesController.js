@@ -40,6 +40,23 @@ const createCliente = async (req, res) => {
     }
 };
 
+// Obtiene la lista de todos los clientes
+const getClientes = async (req, res) => {
+    try {
+        // Seleccionamos los datos clave ordenados por fecha de alta (los mas nuevos primero)
+        const [clientes] = await pool.query(
+            'SELECT id, lead_id, nombre, whatsapp, email, fecha_alta FROM clientes ORDER BY fecha_alta DESC'
+        );
+        
+        res.json(clientes);
+    } catch (error) {
+        console.error('Fallo al obtener la lista de clientes:', error);
+        res.status(500).json({ error: 'Fallo interno del servidor' });
+    }
+};
+
+
 module.exports = {
-    createCliente
+    createCliente,
+    getClientes 
 };

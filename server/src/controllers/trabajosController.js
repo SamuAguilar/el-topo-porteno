@@ -67,7 +67,63 @@ const updateTrabajoStatus = async (req, res) => {
     }
 };
 
+// Obtiene la lista de todos los trabajos con el nombre del cliente
+const getTrabajos = async (req, res) => {
+    try {
+        // Usamos JOIN para traer los datos del trabajo y el nombre del cliente
+        const [trabajos] = await pool.query(`
+            SELECT 
+                t.id, 
+                t.cliente_id, 
+                c.nombre AS cliente_nombre, 
+                t.tipo_servicio, 
+                t.ubicacion, 
+                t.estado, 
+                t.fecha_inicio, 
+                t.fecha_fin, 
+                t.created_at
+            FROM trabajos t
+            JOIN clientes c ON t.cliente_id = c.id
+            ORDER BY t.created_at DESC
+        `);
+        
+        res.json(trabajos);
+    } catch (error) {
+        console.error('Fallo al obtener la lista de trabajos:', error);
+        res.status(500).json({ error: 'Fallo interno del servidor' });
+    }
+};
+
+// Obtiene el historial de cambios de estado de un trabajo especifico
+const getHistorialTrabajo = async (req, res) => {
+    try {
+        const { id } = req.params; // Obtenemos el ID del trabajo desde la URL
+
+        // Hacemos un JOIN con la tabla de usuarios para saber el 'username' de quien hizo el cambio
+        const [historial] = await pool.query(`
+            SELECT 
+                h.id, 
+                h.estado_anterior, 
+                h.estado_nuevo, 
+                h.comentario, 
+                h.fecha_cambio, 
+                u.username AS modificado_por
+            FROM historial_trabajos h
+            JOIN usuarios u ON h.usuario_id = u.id
+            WHERE h.trabajo_id = ?
+            ORDER BY h.fecha_cambio DESC
+        `, [id]);
+
+        res.json(historial);
+    } catch (error) {
+        console.error('Fallo al obtener el historial del trabajo:', error);
+        res.status(500).json({ error: 'Fallo interno del servidor' });
+    }
+};
+
 module.exports = {
     createTrabajo,
-    updateTrabajoStatus
+    updateTrabajoStatus,
+    getTrabajos,
+    getHistorialTrabajo
 };
