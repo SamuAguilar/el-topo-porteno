@@ -18,7 +18,7 @@ La empresa gestionaba sus presupuestos y consultas de forma completamente manual
 
 ### Perfil de usuario destinatario
 - **Cliente final:** persona que necesita excavación, zanjeo o limpieza de pozos. Accede al sitio público desde cualquier dispositivo, completa el formulario y deja sus datos para ser contactado.
-- **Administrador:** dueño o personal autorizado de la empresa. Gestiona leads, convierte clientes y hace seguimiento de trabajos desde el panel privado.
+- **Administrador:** dueño o personal autorizado de la empresa. Gestiona contactos (leads/clientes), convierte clientes y hace seguimiento de trabajos desde el panel privado.
 
 ---
 
@@ -26,35 +26,48 @@ La empresa gestionaba sus presupuestos y consultas de forma completamente manual
 
 ```
 client/
-├── src/                  # Logo e imágenes estáticas
-│   ├── assets/                  # Logo e imágenes estáticas
-│   ├── components/
-│   │   ├── layout/              # Componentes globales de estructura
-│   │   │   ├── Header.jsx       # Navegación sticky con menú responsive
-│   │   │   └── Footer.jsx       # Footer con links y datos de contacto
-│   │   ├── settings/            # Secciones de la landing page
-│   │   │   ├── Hero.jsx         # Sección principal con CTA
-│   │   │   ├── Features.jsx     # Grilla de servicios con cards
-│   │   │   └── FAQ.jsx          # Acordeón de preguntas frecuentes
-│   │   └── ui/                  # Design system — componentes reutilizables
-│            ├── Button.jsx       # 4 variantes × 3 tamaños
-│            ├── Card.jsx         # 3 variantes con icon y subtitle opcionales
-│            └── Input.jsx        # Con label, error y tipo configurable
-│   ├── layouts/
-│       └── AdminLayout.jsx      # Estructuración a las páginas de admin
-│       └── PublicLayout.jsx     # Layout de Home.jsx, página pública
-│   ├── pages/
-│   │   ├── public/
-│   │   │   └── Home.jsx         # Landing page + showcase de componentes
-│   │   └── admin/
-│           ├── Login.jsx        # Pantalla de acceso al panel
-│           └── Dashboard.jsx    # Panel administrativo (próxima fase)
-│   ├── routes/
-│       └── AppRouter.jsx        # Definición de rutas con React Router DOM
-│   ├── services/
-│       └── api.js               # Configuración de Axios (próxima fase)
+└── src/
+    ├── assets/                      # Logo e imágenes estáticas
+    ├── layouts/
+    │   ├── PublicLayout.jsx         # Marco del sitio público (Header + Outlet + Footer)
+    │   └── AdminLayout.jsx          # Marco del panel admin (Sidebar + Outlet)
+    │
+    ├── components/
+    │   ├── layout/                  # Componentes globales de estructura
+    │   │   ├── Header.jsx
+    │   │   └── Footer.jsx
+    │   │
+    │   ├── settings/                # Secciones de la landing page
+    │   │   ├── Hero.jsx
+    │   │   ├── Features.jsx
+    │   │   └── FAQ.jsx
+    │   │
+    │   └── ui/                      # Design system — componentes reutilizables
+    │       ├── Button.jsx
+    │       ├── Card.jsx
+    │       └── Input.jsx
+    │
+    ├── pages/
+    │   ├── public/
+    │   │   └── Home.jsx             # Landing page + showcase de componentes
+    │   │
+    │   └── admin/
+    │       ├── Login.jsx            # Formulario de acceso al panel
+    │       ├── Dashboard.jsx        # Vista general del panel
+    │       ├── ClienteDetalle.jsx   # Detalle de un cliente (/admin/clientes/:id)
+    │       ├── Clientes.jsx         # Lista de clientes registrados
+    │       ├── Trabajos.jsx         # Lista de todos los trabajos
+    │       ├── TrabajoDetalle.jsx   # Detalle de un trabajo (/admin/trabajos/:id)
+    │       └── Configuracion.jsx    # Configuración de precios por servicio
+    │
+    ├── routes/
+    │   └── AppRouter.jsx            # Definición de rutas con React Router DOM v6
+    │
+    ├── services/
+    │   └── api.js                   # Configuración de Axios (próxima fase)
+    │
     └── utils/
-        └── formatters.js        # Utilidades de formato (próxima fase)
+        └── formatters.js            # Utilidades de formato (próxima fase)
 ```
 
 ---
