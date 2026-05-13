@@ -15,11 +15,13 @@ const leadsRoutes = require('./src/routes/leadsRoutes');
 const authRoutes = require('./src/routes/authRoutes');
 const clientesRoutes = require('./src/routes/clientesRoutes');
 const trabajosRoutes = require('./src/routes/trabajosRoutes');
+const dashboardRoutes = require('./src/routes/dashboardRoutes');
 
 app.use('/api/leads', leadsRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/clientes', clientesRoutes);
 app.use('/api/trabajos', trabajosRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 const PORT = process.env.PORT || 3000;
 
