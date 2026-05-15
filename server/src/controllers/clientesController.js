@@ -55,8 +55,34 @@ const getClientes = async (req, res) => {
     }
 };
 
+// Actualiza los datos generales de un cliente
+const updateCliente = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { nombre, whatsapp, email } = req.body;
+
+        // Usamos COALESCE: si un valor llega indefinido (null), mantiene el valor actual de la tabla
+        const [result] = await pool.query(
+            'UPDATE clientes SET nombre = COALESCE(?, nombre), whatsapp = COALESCE(?, whatsapp), email = COALESCE(?, email) WHERE id = ?',
+            [nombre || null, whatsapp || null, email || null, id]
+        );
+
+        // Si affectedRows es 0, significa que el ID no existe
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Cliente no encontrado' });
+        }
+
+        res.json({ mensaje: 'Datos del cliente actualizados exitosamente' });
+
+    } catch (error) {
+        console.error('Fallo al actualizar el cliente:', error);
+        res.status(500).json({ error: 'Fallo interno del servidor' });
+    }
+};
+
 
 module.exports = {
     createCliente,
-    getClientes 
+    getClientes,
+    updateCliente 
 };

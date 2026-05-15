@@ -121,9 +121,58 @@ const getHistorialTrabajo = async (req, res) => {
     }
 };
 
+// Actualiza los datos generales de un trabajo pero sin tocar el estado
+const updateTrabajo = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { tipo_servicio, ubicacion, profundidad_estimada, observaciones } = req.body;
+
+        const [result] = await pool.query(
+            'UPDATE trabajos SET tipo_servicio = COALESCE(?, tipo_servicio), ubicacion = COALESCE(?, ubicacion), profundidad_estimada = COALESCE(?, profundidad_estimada), observaciones = COALESCE(?, observaciones) WHERE id = ?',
+            [tipo_servicio || null, ubicacion || null, profundidad_estimada || null, observaciones || null, id]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Trabajo no encontrado' });
+        }
+
+        res.json({ mensaje: 'Datos del trabajo actualizados exitosamente' });
+
+    } catch (error) {
+        console.error('Fallo al actualizar el trabajo:', error);
+        res.status(500).json({ error: 'Fallo interno del servidor' });
+    }
+};
+
+// Elimina un trabajo y su historial asociado
+const deleteTrabajo = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // 1. Primero eliminamos la "higiene" (el historial) para evitar el error de MySQL
+        await pool.query('DELETE FROM historial_trabajos WHERE trabajo_id = ?', [id]);
+
+        // 2. Ahora sí, eliminamos el trabajo principal
+        const [result] = await pool.query('DELETE FROM trabajos WHERE id = ?', [id]);
+
+        // Verificamos si realmente se borró algo
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Trabajo no encontrado' });
+        }
+
+        res.json({ mensaje: 'Trabajo y su historial eliminados exitosamente' });
+
+    } catch (error) {
+        console.error('Fallo al eliminar el trabajo:', error);
+        res.status(500).json({ error: 'Fallo interno del servidor' });
+    }
+};
+
 module.exports = {
     createTrabajo,
     updateTrabajoStatus,
     getTrabajos,
-    getHistorialTrabajo
+    getHistorialTrabajo,
+    updateTrabajo,
+    deleteTrabajo
 };
