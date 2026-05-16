@@ -40,13 +40,25 @@ const createCliente = async (req, res) => {
     }
 };
 
-// Obtiene la lista de todos los clientes
+// Obtiene la lista de clientes, con opción de búsqueda por nombre o teléfono
 const getClientes = async (req, res) => {
     try {
-        // Seleccionamos los datos clave ordenados por fecha de alta (los mas nuevos primero)
-        const [clientes] = await pool.query(
-            'SELECT id, lead_id, nombre, whatsapp, email, fecha_alta FROM clientes ORDER BY fecha_alta DESC'
-        );
+        const buscar = req.query.buscar; // Capturamos lo que el usuario quiere buscar
+        
+        let query = 'SELECT id, lead_id, nombre, whatsapp, email, fecha_alta FROM clientes';
+        const queryParams = [];
+
+        // Si viene el parámetro "buscar", agregamos la condición LIKE a la consulta
+        if (buscar) {
+            query += ' WHERE nombre LIKE ? OR whatsapp LIKE ?';
+            // Los % indican que puede haber texto antes o después de la palabra buscada
+            const terminoBusqueda = `%${buscar}%`; 
+            queryParams.push(terminoBusqueda, terminoBusqueda);
+        }
+
+        query += ' ORDER BY fecha_alta DESC';
+
+        const [clientes] = await pool.query(query, queryParams);
         
         res.json(clientes);
     } catch (error) {

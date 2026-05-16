@@ -67,11 +67,19 @@ const updateTrabajoStatus = async (req, res) => {
     }
 };
 
-// Obtiene la lista de todos los trabajos con el nombre del cliente
+// Obtiene la lista de trabajos con soporte para filtros y paginación
 const getTrabajos = async (req, res) => {
     try {
-        // Usamos JOIN para traer los datos del trabajo y el nombre del cliente
-        const [trabajos] = await pool.query(`
+        // 1. Capturamos los parámetros de la URL (si no vienen, ponemos valores por defecto)
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const estado = req.query.estado; 
+
+        // Calculamos desde qué registro empezar a traer (OFFSET)
+        const offset = (page - 1) * limit;
+
+        // 2. Armamos la consulta base
+        let query = `
             SELECT 
                 t.id, 
                 t.cliente_id, 
@@ -84,10 +92,42 @@ const getTrabajos = async (req, res) => {
                 t.created_at
             FROM trabajos t
             JOIN clientes c ON t.cliente_id = c.id
-            ORDER BY t.created_at DESC
-        `);
+        `;
         
-        res.json(trabajos);
+        const queryParams = [];
+
+        // 3. Si el frontend envió un estado para filtrar, lo agregamos a la consulta
+        if (estado) {
+            query += ` WHERE t.estado = ?`;
+            queryParams.push(estado);
+        }
+
+        // 4. Agregamos el ordenamiento y la paginación (LIMIT y OFFSET)
+        query += ` ORDER BY t.created_at DESC LIMIT ? OFFSET ?`;
+        queryParams.push(limit, offset);
+
+        // Ejecutamos la consulta principal
+        const [trabajos] = await pool.query(query, queryParams);
+        
+        // 5. Contamos el total real de registros para que el frontend pueda armar los botones de "Página 1, 2, 3..."
+        let countQuery = 'SELECT COUNT(*) as total FROM trabajos';
+        const countParams = [];
+        if (estado) {
+            countQuery += ' WHERE estado = ?';
+            countParams.push(estado);
+        }
+        const [totalRows] = await pool.query(countQuery, countParams);
+        const total = totalRows[0].total;
+
+        // 6. Devolvemos una respuesta enriquecida
+        res.json({
+            data: trabajos,
+            paginacion: {
+                total_registros: total,
+                pagina_actual: page,
+                total_paginas: Math.ceil(total / limit)
+            }
+        });
     } catch (error) {
         console.error('Fallo al obtener la lista de trabajos:', error);
         res.status(500).json({ error: 'Fallo interno del servidor' });

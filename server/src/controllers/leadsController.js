@@ -6,9 +6,9 @@ const createLead = async (req, res) => {
         const { nombre, whatsapp, email, servicio, descripcion } = req.body;
 
         // chequeo de campos obligatorios
-        if (!nombre || !whatsapp || !email || !servicio || !descripcion) {
-            return res.status(400).json({ error: 'Faltan campos obligatorios en la peticion' });
-        }
+        // if (!nombre || !whatsapp || !email || !servicio || !descripcion) {
+        //     return res.status(400).json({ error: 'Faltan campos obligatorios en la peticion' });
+        // }
 
         // insertamos registro en bd
         const [result] = await pool.query(
@@ -28,13 +28,29 @@ const createLead = async (req, res) => {
     }
 };
 
+// Obtiene la lista de leads, con opción de búsqueda por nombre o teléfono
 const getLeads = async (req, res) => {
     try {
-        // consultamos los leads ordenados por fecha mas reciente
-        const [rows] = await pool.query('SELECT * FROM leads ORDER BY fecha_creacion DESC');
-        res.json(rows);
+        const buscar = req.query.buscar; // Capturamos el texto a buscar
+        
+        let query = 'SELECT id, nombre, whatsapp, email, estado, fecha_creacion FROM leads';
+        const queryParams = [];
+
+        // Si el frontend envía algo para buscar, filtramos con LIKE
+        if (buscar) {
+            query += ' WHERE nombre LIKE ? OR whatsapp LIKE ?';
+            const terminoBusqueda = `%${buscar}%`; 
+            queryParams.push(terminoBusqueda, terminoBusqueda);
+        }
+
+        // Ordenamos siempre por los más recientes primero
+        query += ' ORDER BY fecha_creacion DESC';
+
+        const [leads] = await pool.query(query, queryParams);
+        
+        res.json(leads);
     } catch (error) {
-        console.error('Fallo al obtener leads:', error);
+        console.error('Fallo al obtener la lista de leads:', error);
         res.status(500).json({ error: 'Fallo interno del servidor' });
     }
 };
