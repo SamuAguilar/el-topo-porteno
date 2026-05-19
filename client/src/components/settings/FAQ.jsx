@@ -27,7 +27,7 @@ export default function FAQ() {
   const [open, setOpen] = useState(null);
 
   return (
-    <section id="nosotros" className="bg-[#1F2937] py-20 px-6">
+    <section id="faq" className="bg-[#1F2937] py-20 px-6">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-12">
           <span className="text-[#F59E0B] text-sm font-semibold uppercase tracking-widest">

@@ -10,8 +10,7 @@ import Home from "../pages/public/Home";
 // Páginas admin
 import Login from "../pages/admin/Login";
 import Dashboard from "../pages/admin/Dashboard";
-import Leads from "../pages/admin/Leads";
-import Clientes from "../pages/admin/Clientes";
+import GestionContactos from "../pages/admin/GestionContactos";
 import ClienteDetalle from "../pages/admin/ClienteDetalle";
 import Trabajos from "../pages/admin/Trabajos";
 import TrabajoDetalle from "../pages/admin/TrabajoDetalle";
@@ -39,8 +38,7 @@ const router = createBrowserRouter([
     element: <AdminLayout />,
     children: [
       { path: "dashboard",              element: <Dashboard /> },
-      { path: "leads",                  element: <Leads /> },
-      { path: "clientes",               element: <Clientes /> },
+      { path: "gestion-contactos",      element: <GestionContactos /> },
       { path: "clientes/:id",           element: <ClienteDetalle /> },
       { path: "trabajos",               element: <Trabajos /> },
       { path: "trabajos/:id",           element: <TrabajoDetalle /> },

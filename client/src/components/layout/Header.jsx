@@ -18,10 +18,26 @@ export default function Header() {
 
         {/* Nav desktop */}
         <nav className="hidden md:flex items-center gap-8">
-          <a href="#inicio" className="text-white hover:text-[#F59E0B] transition font-medium">Inicio</a>
-          <a href="#servicios" className="text-white hover:text-[#F59E0B] transition font-medium">Servicios</a>
-          <a href="#nosotros" className="text-white hover:text-[#F59E0B] transition font-medium">Nosotros</a>
-          <a href="#contacto" className="text-white hover:text-[#F59E0B] transition font-medium">Contacto</a>
+          {[
+            { label: "Inicio",    target: "inicio" },
+            { label: "Servicios", target: "servicios" },
+            { label: "FAQ",       target: "faq" },
+            { label: "Contacto",  target: "contacto" },
+          ].map(({ label, target }) => (
+            <button
+              key={target}
+              onClick={() => {
+                const el = document.getElementById(target);
+                if (el) {
+                  const y = el.getBoundingClientRect().top + window.pageYOffset - 60;
+                  window.scrollTo({ top: y, behavior: "smooth" });
+                }
+              }}
+              className="text-white hover:text-[#F59E0B] transition font-medium bg-transparent border-none cursor-pointer"
+            >
+              {label}
+            </button>
+          ))}
         </nav>
 
         {/* CTA desktop */}
@@ -48,7 +64,7 @@ export default function Header() {
         <div className="md:hidden bg-[#1F2937] px-6 py-4 flex flex-col gap-4">
           <a href="#inicio" className="text-white hover:text-[#F59E0B] transition" onClick={() => setMenuOpen(false)}>Inicio</a>
           <a href="#servicios" className="text-white hover:text-[#F59E0B] transition" onClick={() => setMenuOpen(false)}>Servicios</a>
-          <a href="#nosotros" className="text-white hover:text-[#F59E0B] transition" onClick={() => setMenuOpen(false)}>Nosotros</a>
+          <a href="#faq" className="text-white hover:text-[#F59E0B] transition" onClick={() => setMenuOpen(false)}>FAQ</a>
           <a href="#contacto" className="text-white hover:text-[#F59E0B] transition" onClick={() => setMenuOpen(false)}>Contacto</a>
         </div>
       )}

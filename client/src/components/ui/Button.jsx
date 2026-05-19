@@ -1,3 +1,5 @@
+import PropTypes from 'prop-types';   // ← import al inicio
+
 export default function Button({ children, variant = "primary", size = "md", onClick, type = "button" }) {
   const base = "inline-flex items-center justify-center font-bold rounded transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0B0B0B]";
 
@@ -24,3 +26,12 @@ export default function Button({ children, variant = "primary", size = "md", onC
     </button>
   );
 }
+
+// Validación de props
+Button.propTypes = {
+  children: PropTypes.node.isRequired,       // contenido del botón
+  variant:  PropTypes.oneOf(['primary', 'secondary', 'outline', 'danger']),
+  size:     PropTypes.oneOf(['sm', 'md', 'lg']),
+  onClick:  PropTypes.func,
+  type:     PropTypes.string,
+};

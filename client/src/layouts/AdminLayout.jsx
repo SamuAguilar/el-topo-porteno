@@ -2,8 +2,7 @@ import { Outlet, NavLink, useNavigate } from "react-router-dom";
 
 const navItems = [
   { to: "/admin/dashboard",     label: "Dashboard" },
-  { to: "/admin/leads",         label: "Leads" },
-  { to: "/admin/clientes",      label: "Clientes" },
+  { to: "/admin/gestion-contactos",      label: "Gestion de Contactos" },
   { to: "/admin/trabajos",      label: "Trabajos" },
   { to: "/admin/configuracion", label: "Configuración" },
 ];
