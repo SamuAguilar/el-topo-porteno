@@ -1,122 +1,74 @@
+// src/pages/admin/Configuracion.jsx
 import { useState } from "react";
 
-const leads = [
-  { id: 1,  nombre: "Carlos Méndez",   whatsapp: "5491112345678", email: "carlos@gmail.com",  servicio: "Excavación", descripcion: "Pozo séptico de 3 metros",         estado: "Nuevo",                 fecha: "12/05/2026", tipo: "lead"    },
-  { id: 2,  nombre: "Laura Gómez",     whatsapp: "5491187654321", email: "laura@gmail.com",   servicio: "Sanjeo",     descripcion: "Zanja para instalación de gas",    estado: "Contactado",            fecha: "11/05/2026", tipo: "lead"    },
-  { id: 3,  nombre: "Martín Herrera",  whatsapp: "5491198765432", email: "martin@gmail.com",  servicio: "Limpieza",   descripcion: "Limpieza de pozo ciego",           estado: "Nuevo",                 fecha: "10/05/2026", tipo: "lead"    },
-  { id: 4,  nombre: "Sofía Ramos",     whatsapp: "5491176543210", email: "sofia@gmail.com",   servicio: "Excavación", descripcion: "Pozo de agua, 5 metros",           estado: "Cerrado no concretado", fecha: "09/05/2026", tipo: "lead"    },
-  { id: 5,  nombre: "Ana Suárez",      whatsapp: "5491134567890", email: "ana@gmail.com",     servicio: "Sanjeo",     descripcion: "Zanja perimetral para cañería",    estado: "Cerrado exitoso",       fecha: "05/05/2026", tipo: "cliente" },
-  { id: 6,  nombre: "Jorge Villalba",  whatsapp: "5491145678901", email: "jorge@gmail.com",   servicio: "Limpieza",   descripcion: "Limpieza y mantenimiento",         estado: "Cerrado exitoso",       fecha: "02/05/2026", tipo: "cliente" },
-  { id: 7,  nombre: "Roberto Díaz",    whatsapp: "5491156789012", email: "roberto@gmail.com", servicio: "Excavación", descripcion: "Pozo séptico doble cámara",        estado: "Cerrado exitoso",       fecha: "28/04/2026", tipo: "cliente" },
+const servicios = [
+  "Excavación — Pozo séptico",
+  "Excavación — Pozo de agua",
+  "Sanjeo",
+  "Limpieza de pozos",
 ];
 
-const estadoConfig = {
-  "Nuevo":                 { bg: "#1a2a1a", text: "#10B981" },
-  "Contactado":            { bg: "#1a2a3a", text: "#3B82F6" },
-  "Cerrado exitoso":       { bg: "#1a1a3a", text: "#8B5CF6" },
-  "Cerrado no concretado": { bg: "#2a1a1a", text: "#EF4444" },
+const preciosIniciales = {
+  "Excavación — Pozo séptico": 85000,
+  "Excavación — Pozo de agua": 95000,
+  "Sanjeo": 60000,
+  "Limpieza de pozos": 35000,
 };
 
-const tabs = ["Todos", "Leads", "Clientes"];
+export default function Configuracion() {
+  const [precios, setPrecios] = useState(preciosIniciales);
+  const [editando, setEditando] = useState(null); // nombre del servicio en edición
+  const [valorEdit, setValorEdit] = useState("");
+  const [mensaje, setMensaje] = useState("");
 
-const estadoOptions = [
-  "Nuevo",
-  "Contactado",
-  "Cerrado exitoso",
-  "Cerrado no concretado",
-];
+  function iniciarEdicion(servicio) {
+    setEditando(servicio);
+    setValorEdit(precios[servicio].toString());
+    setMensaje("");
+  }
 
-export default function GestionContactos() {
-  const [tabActiva, setTabActiva] = useState("Todos");
-  const [filtroEstado, setFiltroEstado] = useState("Todos");
-  const [data, setData] = useState(leads);
+  function cancelarEdicion() {
+    setEditando(null);
+    setValorEdit("");
+  }
 
-  const filtrados = data.filter((c) => {
-    const matchTab =
-      tabActiva === "Todos" ||
-      (tabActiva === "Leads" && c.tipo === "lead") ||
-      (tabActiva === "Clientes" && c.tipo === "cliente");
-    const matchEstado = filtroEstado === "Todos" || c.estado === filtroEstado;
-    return matchTab && matchEstado;
-  });
-
-  function cambiarEstado(id, nuevoEstado) {
-    setData((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, estado: nuevoEstado } : c))
-    );
+  function guardarPrecio(servicio) {
+    const nuevoPrecio = parseFloat(valorEdit);
+    if (isNaN(nuevoPrecio) || nuevoPrecio < 0) {
+      setMensaje("Ingresá un valor numérico válido.");
+      return;
+    }
+    setPrecios({ ...precios, [servicio]: nuevoPrecio });
+    setEditando(null);
+    setMensaje(`Precio de "${servicio}" actualizado correctamente.`);
+    setTimeout(() => setMensaje(""), 3000);
   }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-
-      {/* Encabezado */}
       <div>
         <h1 style={{ color: "#fff", fontSize: "22px", fontWeight: "bold", margin: 0 }}>
-          Gestión de Contactos
+          Configuración
         </h1>
         <p style={{ color: "#6B7280", fontSize: "13px", marginTop: "4px" }}>
-          Leads y clientes registrados
+          Precios de referencia por tipo de servicio
         </p>
       </div>
 
-      {/* Tabs + Filtro */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
-
-        {/* Tabs */}
-        <div style={{ display: "flex", gap: "4px", background: "#1F2937", borderRadius: "8px", padding: "4px" }}>
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setTabActiva(tab)}
-              style={{
-                background: tabActiva === tab ? "#374151" : "none",
-                border: "none",
-                borderRadius: "6px",
-                color: tabActiva === tab ? "#fff" : "#6B7280",
-                fontSize: "13px",
-                fontWeight: tabActiva === tab ? "600" : "400",
-                padding: "6px 16px",
-                cursor: "pointer",
-                transition: "all 0.15s",
-              }}
-            >
-              {tab}
-            </button>
-          ))}
+      {mensaje && (
+        <div style={{
+          background: "#14532d", border: "1px solid #10B981", borderRadius: "6px",
+          color: "#10B981", fontSize: "14px", padding: "10px 16px",
+        }}>
+          {mensaje}
         </div>
+      )}
 
-        {/* Filtro estado */}
-        <select
-          value={filtroEstado}
-          onChange={(e) => setFiltroEstado(e.target.value)}
-          style={{
-            background: "#1F2937",
-            border: "1px solid #374151",
-            borderRadius: "6px",
-            color: "#fff",
-            fontSize: "13px",
-            padding: "7px 12px",
-            cursor: "pointer",
-          }}
-        >
-          <option value="Todos">Todos los estados</option>
-          {estadoOptions.map((e) => (
-            <option key={e} value={e}>{e}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Tabla */}
-      <div style={{
-        background: "#1F2937",
-        border: "1px solid #374151",
-        borderRadius: "10px",
-        overflow: "hidden",
-      }}>
+      <div style={{ background: "#1F2937", border: "1px solid #374151", borderRadius: "10px", overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ borderBottom: "1px solid #374151" }}>
-              {["Nombre", "WhatsApp", "Servicio", "Descripción", "Estado", "Fecha", ""].map((h) => (
+              {["Servicio", "Precio actual", ""].map((h) => (
                 <th key={h} style={{
                   color: "#6B7280", fontSize: "11px", textAlign: "left",
                   padding: "10px 16px", textTransform: "uppercase",
@@ -128,105 +80,66 @@ export default function GestionContactos() {
             </tr>
           </thead>
           <tbody>
-            {filtrados.length === 0 ? (
-              <tr>
-                <td colSpan={7} style={{ padding: "32px", textAlign: "center", color: "#6B7280", fontSize: "14px" }}>
-                  No hay contactos que coincidan con los filtros.
-                </td>
-              </tr>
-            ) : (
-              filtrados.map((c, i) => (
-                <tr
-                  key={c.id}
-                  style={{
-                    borderBottom: i < filtrados.length - 1 ? "1px solid #374151" : "none",
-                    transition: "background 0.15s",
-                  }}
-                  onMouseOver={e => e.currentTarget.style.background = "#263244"}
-                  onMouseOut={e => e.currentTarget.style.background = "transparent"}
-                >
-                  {/* Nombre + tipo */}
-                  <td style={{ padding: "12px 16px" }}>
-                    <div style={{ color: "#fff", fontSize: "14px" }}>{c.nombre}</div>
-                    <div style={{
-                      display: "inline-block",
-                      marginTop: "3px",
-                      background: c.tipo === "lead" ? "#1a2a1a" : "#1a1a3a",
-                      color: c.tipo === "lead" ? "#10B981" : "#8B5CF6",
-                      fontSize: "10px",
-                      padding: "1px 8px",
-                      borderRadius: "999px",
-                      fontWeight: "500",
-                      textTransform: "capitalize",
-                    }}>
-                      {c.tipo}
-                    </div>
-                  </td>
-
-                  {/* WhatsApp */}
-                  <td style={{ padding: "12px 16px" }}>
-                    <a
-                      href={`https://wa.me/${c.whatsapp}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{ color: "#10B981", fontSize: "13px", textDecoration: "none" }}
-                    >
-                      💬 {c.whatsapp}
-                    </a>
-                  </td>
-
-                  {/* Servicio */}
-                  <td style={{ padding: "12px 16px", color: "#6B7280", fontSize: "13px" }}>
-                    {c.servicio}
-                  </td>
-
-                  {/* Descripción */}
-                  <td style={{ padding: "12px 16px", color: "#6B7280", fontSize: "13px", maxWidth: "200px" }}>
-                    <span style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                      {c.descripcion}
-                    </span>
-                  </td>
-
-                  {/* Estado */}
-                  <td style={{ padding: "12px 16px" }}>
-                    <select
-                      value={c.estado}
-                      onChange={(e) => cambiarEstado(c.id, e.target.value)}
+            {servicios.map((servicio) => (
+              <tr key={servicio} style={{ borderBottom: "1px solid #374151" }}>
+                <td style={{ padding: "12px 16px", color: "#fff", fontSize: "14px" }}>{servicio}</td>
+                <td style={{ padding: "12px 16px" }}>
+                  {editando === servicio ? (
+                    <input
+                      type="number"
+                      value={valorEdit}
+                      onChange={(e) => setValorEdit(e.target.value)}
                       style={{
-                        background: estadoConfig[c.estado]?.bg ?? "#1a1a1a",
-                        color: estadoConfig[c.estado]?.text ?? "#fff",
-                        border: "none",
-                        borderRadius: "999px",
-                        fontSize: "12px",
-                        padding: "4px 10px",
-                        cursor: "pointer",
-                        fontWeight: "500",
+                        background: "#0B0B0B", border: "1px solid #374151",
+                        borderRadius: "6px", padding: "6px 10px", color: "#fff",
+                        fontSize: "14px", width: "120px", outline: "none",
+                      }}
+                    />
+                  ) : (
+                    <span style={{ color: "#F59E0B", fontSize: "16px", fontWeight: "bold" }}>
+                      ${precios[servicio].toLocaleString("es-AR")}
+                    </span>
+                  )}
+                </td>
+                <td style={{ padding: "12px 16px", textAlign: "right" }}>
+                  {editando === servicio ? (
+                    <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+                      <button
+                        onClick={() => guardarPrecio(servicio)}
+                        style={{
+                          background: "#F59E0B", color: "#000", border: "none",
+                          borderRadius: "6px", padding: "6px 14px", fontSize: "13px",
+                          fontWeight: "bold", cursor: "pointer",
+                        }}
+                      >
+                        Guardar
+                      </button>
+                      <button
+                        onClick={cancelarEdicion}
+                        style={{
+                          background: "none", border: "1px solid #374151",
+                          borderRadius: "6px", color: "#6B7280", fontSize: "13px",
+                          padding: "6px 14px", cursor: "pointer",
+                        }}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => iniciarEdicion(servicio)}
+                      style={{
+                        background: "none", border: "1px solid #374151",
+                        borderRadius: "6px", color: "#6B7280", fontSize: "13px",
+                        padding: "6px 14px", cursor: "pointer",
                       }}
                     >
-                      {estadoOptions.map((op) => (
-                        <option key={op} value={op}>{op}</option>
-                      ))}
-                    </select>
-                  </td>
-
-                  {/* Fecha */}
-                  <td style={{ padding: "12px 16px", color: "#6B7280", fontSize: "13px" }}>
-                    {c.fecha}
-                  </td>
-
-                  {/* Email */}
-                  <td style={{ padding: "12px 16px" }}>
-                    <a
-                      href={`mailto:${c.email}`}
-                      style={{ color: "#6B7280", fontSize: "12px", textDecoration: "none" }}
-                      title={c.email}
-                    >
-                      ✉️
-                    </a>
-                  </td>
-                </tr>
-              ))
-            )}
+                      Editar
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

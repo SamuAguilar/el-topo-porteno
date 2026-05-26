@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider} from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 // Layouts
 import PublicLayout from "../layouts/PublicLayout";
@@ -16,8 +16,11 @@ import Trabajos from "../pages/admin/Trabajos";
 import TrabajoDetalle from "../pages/admin/TrabajoDetalle";
 import Configuracion from "../pages/admin/Configuracion";
 
+// Protección de rutas
+import ProtectedRoute from "../components/auth/ProtectedRoute";
+
 const router = createBrowserRouter([
-  // ── Rutas públicas ────────────────────────────────────────────
+  // ── Rutas públicas ─────────────────────────────────────────
   {
     path: "/",
     element: <PublicLayout />,
@@ -26,23 +29,28 @@ const router = createBrowserRouter([
     ],
   },
 
-  // ── Login (sin layout) ────────────────────────────────────────
+  // ── Login (público) ────────────────────────────────────────
   {
-    path: "/admin",
+    path: "/admin/login",
     element: <Login />,
   },
 
-  // ── Rutas del panel admin ─────────────────────────────────────
+  // ── Panel admin (protegido) ────────────────────────────────
   {
     path: "/admin",
-    element: <AdminLayout />,
+    element: (
+      <ProtectedRoute>
+        <AdminLayout />
+      </ProtectedRoute>
+    ),
     children: [
-      { path: "dashboard",              element: <Dashboard /> },
-      { path: "gestion-contactos",      element: <GestionContactos /> },
-      { path: "clientes/:id",           element: <ClienteDetalle /> },
-      { path: "trabajos",               element: <Trabajos /> },
-      { path: "trabajos/:id",           element: <TrabajoDetalle /> },
-      { path: "configuracion",          element: <Configuracion /> },
+      { index: true, element: <Dashboard /> },             // /admin → dashboard
+      { path: "dashboard", element: <Dashboard /> },
+      { path: "gestion-contactos", element: <GestionContactos /> },
+      { path: "clientes/:id", element: <ClienteDetalle /> },
+      { path: "trabajos", element: <Trabajos /> },
+      { path: "trabajos/:id", element: <TrabajoDetalle /> },
+      { path: "configuracion", element: <Configuracion /> },
     ],
   },
 ]);

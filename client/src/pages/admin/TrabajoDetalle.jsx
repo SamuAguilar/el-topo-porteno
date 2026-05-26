@@ -1,6 +1,6 @@
-// src/pages/admin/Trabajos.jsx
+// src/pages/admin/TrabajoDetalle.jsx
+import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 const trabajosData = [
   { id: 1, cliente: "Ana Suárez",     servicio: "Sanjeo",     ubicacion: "Quilmes, GBA Sur",      profundidad: null, estado: "En ejecución", fechaInicio: "05/05/2026", fechaFin: "20/05/2026" },
@@ -22,149 +22,142 @@ const estadoConfig = {
 };
 
 const estadoOptions = ["Presupuestado", "Aceptado", "En ejecución", "Finalizado", "En garantía", "Cerrado"];
-const servicioOptions = ["Todos", "Excavación", "Sanjeo", "Limpieza"];
 
-export default function Trabajos() {
+// Genera un historial de ejemplo basado en el estado actual
+function generarHistorial(trabajo) {
+  const base = [
+    { fecha: trabajo.fechaInicio ?? "—", descripcion: "Trabajo creado", estado: "Presupuestado" },
+  ];
+  if (trabajo.estado === "Aceptado" || trabajo.estado === "En ejecución" || trabajo.estado === "Finalizado" || trabajo.estado === "En garantía" || trabajo.estado === "Cerrado") {
+    base.push({ fecha: "—", descripcion: "Presupuesto aceptado", estado: "Aceptado" });
+  }
+  if (trabajo.estado === "En ejecución" || trabajo.estado === "Finalizado" || trabajo.estado === "En garantía" || trabajo.estado === "Cerrado") {
+    base.push({ fecha: "—", descripcion: "Trabajo iniciado", estado: "En ejecución" });
+  }
+  if (trabajo.estado === "Finalizado" || trabajo.estado === "En garantía" || trabajo.estado === "Cerrado") {
+    base.push({ fecha: trabajo.fechaFin ?? "—", descripcion: "Trabajo finalizado", estado: "Finalizado" });
+  }
+  if (trabajo.estado === "En garantía") {
+    base.push({ fecha: "—", descripcion: "Entró en garantía", estado: "En garantía" });
+  }
+  if (trabajo.estado === "Cerrado") {
+    base.push({ fecha: "—", descripcion: "Garantía cumplida, cerrado", estado: "Cerrado" });
+  }
+  return base;
+}
+
+export default function TrabajoDetalle() {
+  const { id } = useParams();
   const navigate = useNavigate();
-  const [data, setData] = useState(trabajosData);
-  const [filtroEstado, setFiltroEstado] = useState("Todos");
-  const [filtroServicio, setFiltroServicio] = useState("Todos");
+  const trabajo = trabajosData.find((t) => t.id === parseInt(id));
+  const [estadoActual, setEstadoActual] = useState(trabajo?.estado ?? "");
+  const [historial, setHistorial] = useState(trabajo ? generarHistorial({...trabajo, estado: estadoActual}) : []);
 
-  const filtrados = data.filter((t) => {
-    const matchEstado   = filtroEstado   === "Todos" || t.estado   === filtroEstado;
-    const matchServicio = filtroServicio === "Todos" || t.servicio === filtroServicio;
-    return matchEstado && matchServicio;
-  });
-
-  function cambiarEstado(id, nuevoEstado) {
-    setData((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, estado: nuevoEstado } : t))
+  if (!trabajo) {
+    return (
+      <div style={{ color: "#6B7280", padding: "32px", textAlign: "center" }}>
+        <p>Trabajo no encontrado.</p>
+        <button onClick={() => navigate("/admin/trabajos")} style={{ color: "#F59E0B", background: "none", border: "none", cursor: "pointer", fontSize: "14px" }}>
+          ← Volver a Trabajos
+        </button>
+      </div>
     );
+  }
+
+  function cambiarEstado(nuevoEstado) {
+    const hoy = new Date().toLocaleDateString("es-AR");
+    setEstadoActual(nuevoEstado);
+    setHistorial((prev) => [
+      ...prev,
+      { fecha: hoy, descripcion: `Estado cambiado a ${nuevoEstado}`, estado: nuevoEstado },
+    ]);
   }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+      <button
+        onClick={() => navigate("/admin/trabajos")}
+        style={{ background: "none", border: "none", color: "#6B7280", cursor: "pointer", fontSize: "13px", padding: 0, width: "fit-content" }}
+      >
+        ← Volver a Trabajos
+      </button>
 
-      {/* Encabezado */}
       <div>
         <h1 style={{ color: "#fff", fontSize: "22px", fontWeight: "bold", margin: 0 }}>
-          Trabajos
+          {trabajo.cliente} — {trabajo.servicio}
         </h1>
         <p style={{ color: "#6B7280", fontSize: "13px", marginTop: "4px" }}>
-          Todos los trabajos y pozos registrados
+          ID: {trabajo.id}
         </p>
       </div>
 
-      {/* Filtros */}
-      <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-        <select
-          value={filtroEstado}
-          onChange={(e) => setFiltroEstado(e.target.value)}
-          style={{
-            background: "#1F2937", border: "1px solid #374151", borderRadius: "6px",
-            color: "#fff", fontSize: "13px", padding: "7px 12px", cursor: "pointer",
-          }}
-        >
-          <option value="Todos">Todos los estados</option>
-          {estadoOptions.map((e) => <option key={e} value={e}>{e}</option>)}
-        </select>
-
-        <select
-          value={filtroServicio}
-          onChange={(e) => setFiltroServicio(e.target.value)}
-          style={{
-            background: "#1F2937", border: "1px solid #374151", borderRadius: "6px",
-            color: "#fff", fontSize: "13px", padding: "7px 12px", cursor: "pointer",
-          }}
-        >
-          {servicioOptions.map((s) => <option key={s} value={s}>{s}</option>)}
-        </select>
+      {/* Datos generales */}
+      <div style={{ background: "#1F2937", border: "1px solid #374151", borderRadius: "10px", padding: "20px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
+        {[
+          { label: "Cliente",         value: trabajo.cliente },
+          { label: "Servicio",        value: trabajo.servicio },
+          { label: "Ubicación",       value: trabajo.ubicacion },
+          { label: "Profundidad",     value: trabajo.profundidad ? `${trabajo.profundidad}m` : "—" },
+          { label: "Fecha inicio",    value: trabajo.fechaInicio ?? "—" },
+          { label: "Fecha fin",       value: trabajo.fechaFin ?? "—" },
+        ].map(({ label, value }) => (
+          <div key={label} style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+            <span style={{ color: "#6B7280", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</span>
+            <span style={{ color: "#fff", fontSize: "14px" }}>{value}</span>
+          </div>
+        ))}
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <span style={{ color: "#6B7280", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Estado</span>
+          <select
+            value={estadoActual}
+            onChange={(e) => cambiarEstado(e.target.value)}
+            style={{
+              background: estadoConfig[estadoActual]?.bg ?? "#1a1a1a",
+              color: estadoConfig[estadoActual]?.text ?? "#fff",
+              border: "none", borderRadius: "999px",
+              fontSize: "12px", padding: "4px 10px",
+              cursor: "pointer", fontWeight: "500",
+              width: "fit-content",
+            }}
+          >
+            {estadoOptions.map((op) => (
+              <option key={op} value={op}>{op}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      {/* Tabla */}
-      <div style={{
-        background: "#1F2937", border: "1px solid #374151",
-        borderRadius: "10px", overflow: "hidden",
-      }}>
+      {/* Historial */}
+      <div style={{ background: "#1F2937", border: "1px solid #374151", borderRadius: "10px", overflow: "hidden" }}>
+        <div style={{ padding: "16px 20px", borderBottom: "1px solid #374151" }}>
+          <h2 style={{ color: "#fff", fontSize: "15px", fontWeight: "bold", margin: 0 }}>Historial de cambios</h2>
+        </div>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ borderBottom: "1px solid #374151" }}>
-              {["Cliente", "Servicio", "Ubicación", "Prof.", "Estado", "Inicio", "Fin", ""].map((h) => (
-                <th key={h} style={{
-                  color: "#6B7280", fontSize: "11px", textAlign: "left",
-                  padding: "10px 16px", textTransform: "uppercase",
-                  letterSpacing: "0.05em", fontWeight: "600",
-                }}>
+              {["Fecha", "Descripción", "Estado"].map((h) => (
+                <th key={h} style={{ color: "#6B7280", fontSize: "11px", textAlign: "left", padding: "10px 16px", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: "600" }}>
                   {h}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {filtrados.length === 0 ? (
-              <tr>
-                <td colSpan={8} style={{ padding: "32px", textAlign: "center", color: "#6B7280", fontSize: "14px" }}>
-                  No hay trabajos que coincidan con los filtros.
+            {historial.map((entry, i) => (
+              <tr key={i} style={{ borderBottom: i < historial.length - 1 ? "1px solid #374151" : "none" }}>
+                <td style={{ padding: "10px 16px", color: "#6B7280", fontSize: "13px" }}>{entry.fecha}</td>
+                <td style={{ padding: "10px 16px", color: "#fff", fontSize: "14px" }}>{entry.descripcion}</td>
+                <td style={{ padding: "10px 16px" }}>
+                  <span style={{
+                    background: estadoConfig[entry.estado]?.bg ?? "#1a1a1a",
+                    color: estadoConfig[entry.estado]?.text ?? "#fff",
+                    fontSize: "12px", padding: "3px 10px", borderRadius: "999px", fontWeight: "500",
+                  }}>
+                    {entry.estado}
+                  </span>
                 </td>
               </tr>
-            ) : (
-              filtrados.map((t, i) => (
-                <tr
-                  key={t.id}
-                  style={{
-                    borderBottom: i < filtrados.length - 1 ? "1px solid #374151" : "none",
-                    transition: "background 0.15s",
-                  }}
-                  onMouseOver={e => e.currentTarget.style.background = "#263244"}
-                  onMouseOut={e => e.currentTarget.style.background = "transparent"}
-                >
-                  <td style={{ padding: "12px 16px", color: "#fff", fontSize: "14px" }}>{t.cliente}</td>
-                  <td style={{ padding: "12px 16px", color: "#6B7280", fontSize: "13px" }}>{t.servicio}</td>
-                  <td style={{ padding: "12px 16px", color: "#6B7280", fontSize: "13px" }}>{t.ubicacion}</td>
-                  <td style={{ padding: "12px 16px", color: "#6B7280", fontSize: "13px" }}>
-                    {t.profundidad ? `${t.profundidad}m` : "—"}
-                  </td>
-                  <td style={{ padding: "12px 16px" }}>
-                    <select
-                      value={t.estado}
-                      onChange={(e) => cambiarEstado(t.id, e.target.value)}
-                      style={{
-                        background: estadoConfig[t.estado]?.bg ?? "#1a1a1a",
-                        color: estadoConfig[t.estado]?.text ?? "#fff",
-                        border: "none", borderRadius: "999px",
-                        fontSize: "12px", padding: "4px 10px",
-                        cursor: "pointer", fontWeight: "500",
-                      }}
-                    >
-                      {estadoOptions.map((op) => (
-                        <option key={op} value={op}>{op}</option>
-                      ))}
-                    </select>
-                  </td>
-                  <td style={{ padding: "12px 16px", color: "#6B7280", fontSize: "13px" }}>
-                    {t.fechaInicio ?? "—"}
-                  </td>
-                  <td style={{ padding: "12px 16px", color: "#6B7280", fontSize: "13px" }}>
-                    {t.fechaFin ?? "—"}
-                  </td>
-                  <td style={{ padding: "12px 16px" }}>
-                    <button
-                      onClick={() => navigate(`/admin/trabajos/${t.id}`)}
-                      style={{
-                        background: "none", border: "1px solid #374151",
-                        borderRadius: "6px", color: "#6B7280",
-                        fontSize: "12px", padding: "5px 12px", cursor: "pointer",
-                        transition: "all 0.15s",
-                      }}
-                      onMouseOver={e => { e.currentTarget.style.borderColor = "#F59E0B"; e.currentTarget.style.color = "#F59E0B"; }}
-                      onMouseOut={e => { e.currentTarget.style.borderColor = "#374151"; e.currentTarget.style.color = "#6B7280"; }}
-                    >
-                      Ver
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
+            ))}
           </tbody>
         </table>
       </div>

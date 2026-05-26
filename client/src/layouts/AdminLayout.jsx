@@ -2,7 +2,7 @@ import { Outlet, NavLink, useNavigate } from "react-router-dom";
 
 const navItems = [
   { to: "/admin/dashboard",     label: "Dashboard" },
-  { to: "/admin/gestion-contactos",      label: "Gestion de Contactos" },
+  { to: "/admin/gestion-contactos", label: "Contactos" },
   { to: "/admin/trabajos",      label: "Trabajos" },
   { to: "/admin/configuracion", label: "Configuración" },
 ];
@@ -10,10 +10,10 @@ const navItems = [
 export default function AdminLayout() {
   const navigate = useNavigate();
 
-  function handleLogout() {
-    // Lógica de logout
-    navigate("/admin");
-  }
+function handleLogout() {
+  localStorage.removeItem("token");
+  navigate("/admin/login");
+}
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#0B0B0B" }}>
