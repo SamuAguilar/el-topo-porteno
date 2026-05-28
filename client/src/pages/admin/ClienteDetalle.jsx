@@ -1,27 +1,8 @@
 // src/pages/admin/ClienteDetalle.jsx
-import { useParams, useNavigate } from "react-router-dom";
-
-const clientesData = [
-  {
-    id: 5, nombre: "Ana Suárez", whatsapp: "5491134567890", email: "ana@gmail.com", fechaAlta: "05/05/2026",
-    trabajos: [
-      { id: 1, servicio: "Sanjeo",     ubicacion: "Quilmes, GBA Sur",    estado: "En ejecución", fechaInicio: "05/05/2026", fechaFin: "20/05/2026" },
-    ],
-  },
-  {
-    id: 6, nombre: "Jorge Villalba", whatsapp: "5491145678901", email: "jorge@gmail.com", fechaAlta: "02/05/2026",
-    trabajos: [
-      { id: 2, servicio: "Limpieza",   ubicacion: "Lanús, GBA Sur",       estado: "En ejecución", fechaInicio: "08/05/2026", fechaFin: "10/05/2026" },
-    ],
-  },
-  {
-    id: 7, nombre: "Roberto Díaz", whatsapp: "5491156789012", email: "roberto@gmail.com", fechaAlta: "28/04/2026",
-    trabajos: [
-      { id: 3, servicio: "Excavación", ubicacion: "Palermo, CABA",        estado: "Finalizado",   fechaInicio: "20/04/2026", fechaFin: "28/04/2026" },
-      { id: 7, servicio: "Limpieza",   ubicacion: "Flores, CABA",         estado: "Cerrado",      fechaInicio: "15/03/2026", fechaFin: "16/03/2026" },
-    ],
-  },
-];
+import { useEffect, useState } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { apiFetch } from "../../services/api";
+import { formatDate, normalizarEstado } from "../../utils/formatters";
 
 const estadoConfig = {
   "Presupuestado": { bg: "#1a1a2a", text: "#6B7280" },
@@ -35,23 +16,99 @@ const estadoConfig = {
 export default function ClienteDetalle() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const cliente = clientesData.find((c) => c.id === parseInt(id));
+  // Obtener el cliente del state si viene desde la tabla, sino null
+  const [cliente, setCliente] = useState(() => location.state?.cliente ?? null);
+  const [trabajos, setTrabajos] = useState([]);
+  const [loading, setLoading] = useState(!cliente); // Si no tenemos cliente, mostramos carga
+  const [error, setError] = useState("");
 
-  if (!cliente) {
+  useEffect(() => {
+    let cancelado = false;
+
+    async function cargarTrabajos(clienteId) {
+      try {
+        const resTrabajos = await apiFetch("/trabajos");
+        if (cancelado) return;
+
+        const todosTrabajos = resTrabajos.data || [];
+        const trabajosCliente = todosTrabajos
+          .filter((t) => t.cliente_id === parseInt(clienteId))
+          .map((t) => ({
+            ...t,
+            estado: normalizarEstado(t.estado),
+          }));
+
+        setTrabajos(trabajosCliente);
+        setError("");
+      } catch (err) {
+        if (!cancelado) {
+          console.error(err);
+          setError("Error al cargar los trabajos del cliente.");
+        }
+      } finally {
+        if (!cancelado) setLoading(false);
+      }
+    }
+
+    // Si ya tenemos cliente (vino del state), solo cargamos trabajos
+    if (cliente) {
+      cargarTrabajos(cliente.id);
+      return;
+    }
+
+    // Si no hay cliente en state, intentamos obtenerlo de la API (fallback)
+    async function fetchCliente() {
+      try {
+        const clienteData = await apiFetch(`/clientes/${id}`);
+        if (!cancelado) {
+          setCliente(clienteData);
+          cargarTrabajos(clienteData.id);
+        }
+      } catch (err) {
+        if (!cancelado) {
+          console.error(err);
+          setError("Cliente no encontrado.");
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchCliente();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [id, cliente]);
+
+  // Mostrar carga mientras se espera
+  if (loading) {
     return (
       <div style={{ color: "#6B7280", padding: "32px", textAlign: "center" }}>
-        <p>Cliente no encontrado.</p>
-        <button onClick={() => navigate("/admin/gestion-contactos")} style={{ color: "#F59E0B", background: "none", border: "none", cursor: "pointer", fontSize: "14px" }}>
+        Cargando cliente...
+      </div>
+    );
+  }
+
+  // Mostrar error si no hay cliente
+  if (error || !cliente) {
+    return (
+      <div style={{ color: "#6B7280", padding: "32px", textAlign: "center" }}>
+        <p>{error || "Cliente no encontrado."}</p>
+        <button
+          onClick={() => navigate("/admin/gestion-contactos")}
+          style={{ color: "#F59E0B", background: "none", border: "none", cursor: "pointer", fontSize: "14px" }}
+        >
           ← Volver a Contactos
         </button>
       </div>
     );
   }
 
+  // Datos del cliente (ya están disponibles)
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-
       {/* Volver */}
       <button
         onClick={() => navigate("/admin/gestion-contactos")}
@@ -66,7 +123,7 @@ export default function ClienteDetalle() {
           {cliente.nombre}
         </h1>
         <p style={{ color: "#6B7280", fontSize: "13px", marginTop: "4px" }}>
-          Cliente desde {cliente.fechaAlta}
+          Cliente desde {formatDate(cliente.fecha_alta ?? cliente.fecha_creacion)}
         </p>
       </div>
 
@@ -79,7 +136,7 @@ export default function ClienteDetalle() {
             ["Nombre",          cliente.nombre],
             ["WhatsApp",        cliente.whatsapp],
             ["Email",           cliente.email],
-            ["Alta en sistema", cliente.fechaAlta],
+            ["Alta en sistema", formatDate(cliente.fecha_alta ?? cliente.fecha_creacion)],
           ].map(([label, value]) => (
             <div key={label} style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
               <span style={{ color: "#6B7280", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</span>
@@ -119,11 +176,11 @@ export default function ClienteDetalle() {
       <div style={{ background: "#1F2937", border: "1px solid #374151", borderRadius: "10px", overflow: "hidden" }}>
         <div style={{ padding: "16px 20px", borderBottom: "1px solid #374151", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h2 style={{ color: "#fff", fontSize: "15px", fontWeight: "bold", margin: 0 }}>
-            Trabajos ({cliente.trabajos.length})
+            Trabajos ({trabajos.length})
           </h2>
         </div>
 
-        {cliente.trabajos.length === 0 ? (
+        {trabajos.length === 0 ? (
           <p style={{ color: "#6B7280", fontSize: "14px", padding: "24px 20px", margin: 0 }}>
             Este cliente no tiene trabajos registrados.
           </p>
@@ -143,18 +200,22 @@ export default function ClienteDetalle() {
               </tr>
             </thead>
             <tbody>
-              {cliente.trabajos.map((t, i) => (
+              {trabajos.map((t, i) => (
                 <tr
                   key={t.id}
                   style={{
-                    borderBottom: i < cliente.trabajos.length - 1 ? "1px solid #374151" : "none",
+                    borderBottom: i < trabajos.length - 1 ? "1px solid #374151" : "none",
                     transition: "background 0.15s",
                   }}
                   onMouseOver={e => e.currentTarget.style.background = "#263244"}
                   onMouseOut={e => e.currentTarget.style.background = "transparent"}
                 >
-                  <td style={{ padding: "12px 16px", color: "#fff",    fontSize: "14px" }}>{t.servicio}</td>
-                  <td style={{ padding: "12px 16px", color: "#6B7280", fontSize: "13px" }}>{t.ubicacion}</td>
+                  <td style={{ padding: "12px 16px", color: "#fff", fontSize: "14px" }}>
+                    {t.tipo_servicio ?? "—"}
+                  </td>
+                  <td style={{ padding: "12px 16px", color: "#6B7280", fontSize: "13px" }}>
+                    {t.ubicacion}
+                  </td>
                   <td style={{ padding: "12px 16px" }}>
                     <span style={{
                       background: estadoConfig[t.estado]?.bg ?? "#1a1a1a",
@@ -165,8 +226,12 @@ export default function ClienteDetalle() {
                       {t.estado}
                     </span>
                   </td>
-                  <td style={{ padding: "12px 16px", color: "#6B7280", fontSize: "13px" }}>{t.fechaInicio ?? "—"}</td>
-                  <td style={{ padding: "12px 16px", color: "#6B7280", fontSize: "13px" }}>{t.fechaFin ?? "—"}</td>
+                  <td style={{ padding: "12px 16px", color: "#6B7280", fontSize: "13px" }}>
+                    {formatDate(t.fecha_inicio)}
+                  </td>
+                  <td style={{ padding: "12px 16px", color: "#6B7280", fontSize: "13px" }}>
+                    {formatDate(t.fecha_fin)}
+                  </td>
                   <td style={{ padding: "12px 16px" }}>
                     <button
                       onClick={() => navigate(`/admin/trabajos/${t.id}`)}
@@ -188,7 +253,6 @@ export default function ClienteDetalle() {
           </table>
         )}
       </div>
-
     </div>
   );
 }

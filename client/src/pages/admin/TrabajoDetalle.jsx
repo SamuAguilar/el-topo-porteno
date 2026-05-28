@@ -1,76 +1,116 @@
 // src/pages/admin/TrabajoDetalle.jsx
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useState } from "react";
-
-const trabajosData = [
-  { id: 1, cliente: "Ana Suárez",     servicio: "Sanjeo",     ubicacion: "Quilmes, GBA Sur",      profundidad: null, estado: "En ejecución", fechaInicio: "05/05/2026", fechaFin: "20/05/2026" },
-  { id: 2, cliente: "Jorge Villalba", servicio: "Limpieza",   ubicacion: "Lanús, GBA Sur",         profundidad: null, estado: "En ejecución", fechaInicio: "08/05/2026", fechaFin: "10/05/2026" },
-  { id: 3, cliente: "Roberto Díaz",   servicio: "Excavación", ubicacion: "Palermo, CABA",          profundidad: 4.5,  estado: "Finalizado",   fechaInicio: "20/04/2026", fechaFin: "28/04/2026" },
-  { id: 4, cliente: "Carlos Méndez",  servicio: "Excavación", ubicacion: "Palermo, CABA",          profundidad: 3.0,  estado: "Aceptado",     fechaInicio: "15/05/2026", fechaFin: null         },
-  { id: 5, cliente: "María Torres",   servicio: "Sanjeo",     ubicacion: "Morón, GBA Oeste",       profundidad: null, estado: "Presupuestado",fechaInicio: null,         fechaFin: null         },
-  { id: 6, cliente: "Pablo Ríos",     servicio: "Excavación", ubicacion: "Lomas de Zamora, GBA",   profundidad: 6.0,  estado: "En garantía",  fechaInicio: "01/04/2026", fechaFin: "10/04/2026" },
-  { id: 7, cliente: "Roberto Díaz",   servicio: "Limpieza",   ubicacion: "Flores, CABA",           profundidad: null, estado: "Cerrado",      fechaInicio: "15/03/2026", fechaFin: "16/03/2026" },
-];
+import { apiFetch } from "../../services/api";
+import { formatDate, normalizarEstado, estadoParaApi } from "../../utils/formatters";
 
 const estadoConfig = {
-  "Presupuestado": { bg: "#1a1a2a", text: "#6B7280"  },
-  "Aceptado":      { bg: "#1a2a3a", text: "#3B82F6"  },
-  "En ejecución":  { bg: "#1a2a1a", text: "#10B981"  },
-  "Finalizado":    { bg: "#1a1a3a", text: "#8B5CF6"  },
-  "En garantía":   { bg: "#2a2a1a", text: "#F59E0B"  },
-  "Cerrado":       { bg: "#1a2a1a", text: "#34D399"  },
+  "Presupuestado": { bg: "#1a1a2a", text: "#6B7280" },
+  "Aceptado":      { bg: "#1a2a3a", text: "#3B82F6" },
+  "En ejecución":  { bg: "#1a2a1a", text: "#10B981" },
+  "Finalizado":    { bg: "#1a1a3a", text: "#8B5CF6" },
+  "En garantía":   { bg: "#2a2a1a", text: "#F59E0B" },
+  "Cerrado":       { bg: "#1a2a1a", text: "#34D399" },
 };
 
 const estadoOptions = ["Presupuestado", "Aceptado", "En ejecución", "Finalizado", "En garantía", "Cerrado"];
 
-// Genera un historial de ejemplo basado en el estado actual
-function generarHistorial(trabajo) {
-  const base = [
-    { fecha: trabajo.fechaInicio ?? "—", descripcion: "Trabajo creado", estado: "Presupuestado" },
-  ];
-  if (trabajo.estado === "Aceptado" || trabajo.estado === "En ejecución" || trabajo.estado === "Finalizado" || trabajo.estado === "En garantía" || trabajo.estado === "Cerrado") {
-    base.push({ fecha: "—", descripcion: "Presupuesto aceptado", estado: "Aceptado" });
-  }
-  if (trabajo.estado === "En ejecución" || trabajo.estado === "Finalizado" || trabajo.estado === "En garantía" || trabajo.estado === "Cerrado") {
-    base.push({ fecha: "—", descripcion: "Trabajo iniciado", estado: "En ejecución" });
-  }
-  if (trabajo.estado === "Finalizado" || trabajo.estado === "En garantía" || trabajo.estado === "Cerrado") {
-    base.push({ fecha: trabajo.fechaFin ?? "—", descripcion: "Trabajo finalizado", estado: "Finalizado" });
-  }
-  if (trabajo.estado === "En garantía") {
-    base.push({ fecha: "—", descripcion: "Entró en garantía", estado: "En garantía" });
-  }
-  if (trabajo.estado === "Cerrado") {
-    base.push({ fecha: "—", descripcion: "Garantía cumplida, cerrado", estado: "Cerrado" });
-  }
-  return base;
-}
-
 export default function TrabajoDetalle() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const trabajo = trabajosData.find((t) => t.id === parseInt(id));
-  const [estadoActual, setEstadoActual] = useState(trabajo?.estado ?? "");
-  const [historial, setHistorial] = useState(trabajo ? generarHistorial({...trabajo, estado: estadoActual}) : []);
 
-  if (!trabajo) {
+  const [trabajo, setTrabajo] = useState(null);
+  const [historial, setHistorial] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelado = false;
+
+    async function fetchDetalle() {
+      try {
+        // Obtener la lista de trabajos y buscar el que coincida con el id
+        const resTrabajos = await apiFetch("/trabajos");
+        const trabajosRaw = resTrabajos.data || [];
+        // Normalizar estados de todos los trabajos
+        const trabajosNormalizados = trabajosRaw.map(t => ({
+          ...t,
+          estado: normalizarEstado(t.estado),
+        }));
+        const trabajoActual = trabajosNormalizados.find(t => t.id === parseInt(id));
+
+        if (!trabajoActual) throw new Error("Trabajo no encontrado");
+
+        // Obtener historial
+        const historialData = await apiFetch(`/trabajos/${id}/historial`);
+        const historialNormalizado = Array.isArray(historialData)
+          ? historialData.map(h => ({
+              ...h,
+              estado_anterior: normalizarEstado(h.estado_anterior),
+              estado_nuevo: normalizarEstado(h.estado_nuevo),
+            }))
+          : [];
+
+        if (!cancelado) {
+          setTrabajo(trabajoActual);
+          setHistorial(historialNormalizado);
+          setError("");
+        }
+      } catch (err) {
+        if (!cancelado) {
+          console.error(err);
+          setError(err.message || "Error al cargar el trabajo.");
+        }
+      } finally {
+        if (!cancelado) setLoading(false);
+      }
+    }
+
+    fetchDetalle();
+    return () => { cancelado = true; };
+  }, [id]);
+
+  async function cambiarEstado(nuevoEstado) {
+    try {
+      await apiFetch(`/trabajos/${id}/estado`, {
+        method: "PUT",
+        body: { estado_nuevo: estadoParaApi(nuevoEstado) },
+      });
+      // Actualizar localmente
+      setTrabajo(prev => ({ ...prev, estado: nuevoEstado }));
+      // Recargar historial
+      const historialData = await apiFetch(`/trabajos/${id}/historial`);
+      const historialNormalizado = Array.isArray(historialData)
+        ? historialData.map(h => ({
+            ...h,
+            estado_anterior: normalizarEstado(h.estado_anterior),
+            estado_nuevo: normalizarEstado(h.estado_nuevo),
+          }))
+        : [];
+      setHistorial(historialNormalizado);
+    } catch (err) {
+      console.error(err);
+      alert("No se pudo actualizar el estado.");
+    }
+  }
+
+  if (loading) {
     return (
       <div style={{ color: "#6B7280", padding: "32px", textAlign: "center" }}>
-        <p>Trabajo no encontrado.</p>
+        Cargando trabajo...
+      </div>
+    );
+  }
+
+  if (error || !trabajo) {
+    return (
+      <div style={{ color: "#6B7280", padding: "32px", textAlign: "center" }}>
+        <p>{error || "Trabajo no encontrado."}</p>
         <button onClick={() => navigate("/admin/trabajos")} style={{ color: "#F59E0B", background: "none", border: "none", cursor: "pointer", fontSize: "14px" }}>
           ← Volver a Trabajos
         </button>
       </div>
     );
-  }
-
-  function cambiarEstado(nuevoEstado) {
-    const hoy = new Date().toLocaleDateString("es-AR");
-    setEstadoActual(nuevoEstado);
-    setHistorial((prev) => [
-      ...prev,
-      { fecha: hoy, descripcion: `Estado cambiado a ${nuevoEstado}`, estado: nuevoEstado },
-    ]);
   }
 
   return (
@@ -84,7 +124,7 @@ export default function TrabajoDetalle() {
 
       <div>
         <h1 style={{ color: "#fff", fontSize: "22px", fontWeight: "bold", margin: 0 }}>
-          {trabajo.cliente} — {trabajo.servicio}
+          {trabajo.cliente_nombre} — {trabajo.tipo_servicio}
         </h1>
         <p style={{ color: "#6B7280", fontSize: "13px", marginTop: "4px" }}>
           ID: {trabajo.id}
@@ -94,12 +134,12 @@ export default function TrabajoDetalle() {
       {/* Datos generales */}
       <div style={{ background: "#1F2937", border: "1px solid #374151", borderRadius: "10px", padding: "20px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
         {[
-          { label: "Cliente",         value: trabajo.cliente },
-          { label: "Servicio",        value: trabajo.servicio },
+          { label: "Cliente",         value: trabajo.cliente_nombre },
+          { label: "Servicio",        value: trabajo.tipo_servicio },
           { label: "Ubicación",       value: trabajo.ubicacion },
-          { label: "Profundidad",     value: trabajo.profundidad ? `${trabajo.profundidad}m` : "—" },
-          { label: "Fecha inicio",    value: trabajo.fechaInicio ?? "—" },
-          { label: "Fecha fin",       value: trabajo.fechaFin ?? "—" },
+          { label: "Profundidad",     value: trabajo.profundidad_estimada ? `${trabajo.profundidad_estimada}m` : "—" },
+          { label: "Fecha inicio",    value: formatDate(trabajo.fecha_inicio) },
+          { label: "Fecha fin",       value: formatDate(trabajo.fecha_fin) },
         ].map(({ label, value }) => (
           <div key={label} style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
             <span style={{ color: "#6B7280", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</span>
@@ -109,11 +149,11 @@ export default function TrabajoDetalle() {
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           <span style={{ color: "#6B7280", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Estado</span>
           <select
-            value={estadoActual}
+            value={trabajo.estado}
             onChange={(e) => cambiarEstado(e.target.value)}
             style={{
-              background: estadoConfig[estadoActual]?.bg ?? "#1a1a1a",
-              color: estadoConfig[estadoActual]?.text ?? "#fff",
+              background: estadoConfig[trabajo.estado]?.bg ?? "#1a1a1a",
+              color: estadoConfig[trabajo.estado]?.text ?? "#fff",
               border: "none", borderRadius: "999px",
               fontSize: "12px", padding: "4px 10px",
               cursor: "pointer", fontWeight: "500",
@@ -132,34 +172,56 @@ export default function TrabajoDetalle() {
         <div style={{ padding: "16px 20px", borderBottom: "1px solid #374151" }}>
           <h2 style={{ color: "#fff", fontSize: "15px", fontWeight: "bold", margin: 0 }}>Historial de cambios</h2>
         </div>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ borderBottom: "1px solid #374151" }}>
-              {["Fecha", "Descripción", "Estado"].map((h) => (
-                <th key={h} style={{ color: "#6B7280", fontSize: "11px", textAlign: "left", padding: "10px 16px", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: "600" }}>
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {historial.map((entry, i) => (
-              <tr key={i} style={{ borderBottom: i < historial.length - 1 ? "1px solid #374151" : "none" }}>
-                <td style={{ padding: "10px 16px", color: "#6B7280", fontSize: "13px" }}>{entry.fecha}</td>
-                <td style={{ padding: "10px 16px", color: "#fff", fontSize: "14px" }}>{entry.descripcion}</td>
-                <td style={{ padding: "10px 16px" }}>
-                  <span style={{
-                    background: estadoConfig[entry.estado]?.bg ?? "#1a1a1a",
-                    color: estadoConfig[entry.estado]?.text ?? "#fff",
-                    fontSize: "12px", padding: "3px 10px", borderRadius: "999px", fontWeight: "500",
-                  }}>
-                    {entry.estado}
-                  </span>
-                </td>
+        {historial.length === 0 ? (
+          <div style={{ padding: "24px 20px", color: "#6B7280", fontSize: "14px" }}>
+            Sin movimientos registrados.
+          </div>
+        ) : (
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ borderBottom: "1px solid #374151" }}>
+                {["Fecha", "Estado anterior", "Estado nuevo", "Usuario", "Comentario"].map((h) => (
+                  <th key={h} style={{ color: "#6B7280", fontSize: "11px", textAlign: "left", padding: "10px 16px", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: "600" }}>
+                    {h}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {historial.map((entry, i) => (
+                <tr key={entry.id || i} style={{ borderBottom: i < historial.length - 1 ? "1px solid #374151" : "none" }}>
+                  <td style={{ padding: "10px 16px", color: "#6B7280", fontSize: "13px" }}>
+                    {formatDate(entry.fecha_cambio)}
+                  </td>
+                  <td style={{ padding: "10px 16px" }}>
+                    <span style={{
+                      background: estadoConfig[entry.estado_anterior]?.bg ?? "#1a1a1a",
+                      color: estadoConfig[entry.estado_anterior]?.text ?? "#fff",
+                      fontSize: "12px", padding: "3px 10px", borderRadius: "999px", fontWeight: "500",
+                    }}>
+                      {entry.estado_anterior}
+                    </span>
+                  </td>
+                  <td style={{ padding: "10px 16px" }}>
+                    <span style={{
+                      background: estadoConfig[entry.estado_nuevo]?.bg ?? "#1a1a1a",
+                      color: estadoConfig[entry.estado_nuevo]?.text ?? "#fff",
+                      fontSize: "12px", padding: "3px 10px", borderRadius: "999px", fontWeight: "500",
+                    }}>
+                      {entry.estado_nuevo}
+                    </span>
+                  </td>
+                  <td style={{ padding: "10px 16px", color: "#6B7280", fontSize: "13px" }}>
+                    {entry.modificado_por ?? "—"}
+                  </td>
+                  <td style={{ padding: "10px 16px", color: "#fff", fontSize: "13px" }}>
+                    {entry.comentario ?? "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

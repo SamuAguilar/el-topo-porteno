@@ -1,50 +1,76 @@
 // src/pages/admin/Dashboard.jsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiFetch } from "../../services/api"; 
+import { apiFetch } from "../../services/api";
+import { normalizarEstado } from "../../utils/formatters";
 
-const statsMock = [
-  { label: "Leads nuevos",       value: "8",  sub: "Esta semana",        color: "#F59E0B" },
-  { label: "Clientes activos",   value: "24", sub: "Total registrados",  color: "#10B981" },
-  { label: "Trabajos en curso",  value: "5",  sub: "En ejecución",       color: "#3B82F6" },
-  { label: "Trabajos cerrados",  value: "31", sub: "Historial total",    color: "#8B5CF6" },
-];
+const cardColors = ["#F59E0B", "#10B981", "#3B82F6", "#8B5CF6"];
 
-const trabajosEnCursoMock = [
-  { id: 1, cliente: "Carlos Méndez",  tipo: "Excavación", ubicacion: "Palermo, CABA",      estado: "En ejecución" },
-  { id: 2, cliente: "Ana Suárez",     tipo: "Sanjeo",     ubicacion: "Quilmes, GBA Sur",   estado: "Aceptado"     },
-  { id: 3, cliente: "Jorge Villalba", tipo: "Limpieza",   ubicacion: "Lanús, GBA Sur",     estado: "En ejecución" },
-];
-
-const estadoColor = {
-  "En ejecución":  { bg: "#1a2a1a", text: "#10B981" },
-  "Aceptado":      { bg: "#1a2a3a", text: "#3B82F6" },
+const estadoBadge = {
   "Presupuestado": { bg: "#1a1a2a", text: "#6B7280" },
+  "Aceptado":      { bg: "#1a2a3a", text: "#3B82F6" },
+  "En ejecución":  { bg: "#1a2a1a", text: "#10B981" },
+  "Finalizado":    { bg: "#1a1a3a", text: "#8B5CF6" },
+  "En garantía":   { bg: "#2a2a1a", text: "#F59E0B" },
+  "Cerrado":       { bg: "#1a2a1a", text: "#34D399" },
 };
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [stats, setStats] = useState(statsMock);
-  const [loadingStats, setLoadingStats] = useState(true);
+
+  const [stats, setStats] = useState(null);         // null = cargando
+  const [trabajos, setTrabajos] = useState(null);   // null = cargando
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    async function fetchStats() {
+    let cancelado = false;
+
+    async function fetchData() {
       try {
-        const data = await apiFetch("/clientes/stats"); // Ajustá la ruta real cuando el backend la defina
-        // Mapeo de los datos que devuelva la API al formato de las tarjetas
-        setStats([
-          { label: "Leads nuevos",       value: String(data.leadsNuevos ?? statsMock[0].value), sub: statsMock[0].sub, color: statsMock[0].color },
-          { label: "Clientes activos",   value: String(data.clientesActivos ?? statsMock[1].value), sub: statsMock[1].sub, color: statsMock[1].color },
-          { label: "Trabajos en curso",  value: String(data.trabajosEnCurso ?? statsMock[2].value), sub: statsMock[2].sub, color: statsMock[2].color },
-          { label: "Trabajos cerrados",  value: String(data.trabajosCerrados ?? statsMock[3].value), sub: statsMock[3].sub, color: statsMock[3].color },
-        ]);
-      } catch {
-        // Si falla, dejamos los mocks
-      } finally {
-        setLoadingStats(false);
+        // 1. Obtener estadísticas
+        const dataStats = await apiFetch("/dashboard/stats");
+        if (cancelado) return;
+
+        const tarjetas = [
+          { label: "Leads nuevos",       value: dataStats.leadsNuevos       ?? 0 },
+          { label: "Clientes activos",   value: dataStats.clientesActivos   ?? 0 },
+          { label: "Trabajos en curso",  value: dataStats.trabajosEnCurso  ?? 0 },
+          { label: "Trabajos cerrados",  value: dataStats.trabajosCerrados ?? 0 },
+        ].map((item, idx) => ({
+          ...item,
+          sub: item.label === "Leads nuevos" ? "Esta semana" :
+               item.label === "Clientes activos" ? "Total registrados" :
+               item.label === "Trabajos en curso" ? "En ejecución" : "Historial total",
+          color: cardColors[idx],
+        }));
+
+        setStats(tarjetas);
+
+        // 2. Obtener trabajos en curso
+        const dataTrabajos = await apiFetch("/trabajos");
+        if (cancelado) return;
+
+        const enCurso = Array.isArray(dataTrabajos.data)
+          ? dataTrabajos.data
+              .map(t => ({ ...t, estado: normalizarEstado(t.estado) }))
+              .filter(t => t.estado === "En ejecución" || t.estado === "Aceptado")
+          : [];
+
+        setTrabajos(enCurso);
+        setError("");
+      } catch (err) {
+        if (!cancelado) {
+          console.error(err);
+          setError("No se pudieron cargar los datos del panel.");
+        }
       }
     }
-    fetchStats();
+
+    fetchData();
+
+    return () => {
+      cancelado = true;
+    };
   }, []);
 
   return (
@@ -59,33 +85,54 @@ export default function Dashboard() {
         </p>
       </div>
 
+      {/* Mensaje de error global */}
+      {error && (
+        <div style={{
+          background: "#2a1a1a", border: "1px solid #EF4444",
+          borderRadius: "6px", color: "#EF4444", padding: "12px 16px", fontSize: "14px",
+        }}>
+          {error}
+        </div>
+      )}
+
       {/* KPIs */}
       <div style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
         gap: "16px",
       }}>
-        {stats.map((s) => (
-          <div key={s.label} style={{
-            background: "#1F2937",
-            border: `1px solid #374151`,
-            borderRadius: "10px",
-            padding: "20px",
-            borderLeft: `4px solid ${s.color}`,
-            opacity: loadingStats ? 0.6 : 1,
-            transition: "opacity 0.2s",
-          }}>
-            <p style={{ color: "#6B7280", fontSize: "12px", margin: "0 0 8px 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              {s.label}
-            </p>
-            <p style={{ color: "#fff", fontSize: "32px", fontWeight: "bold", margin: "0 0 4px 0", lineHeight: 1 }}>
-              {s.value}
-            </p>
-            <p style={{ color: "#6B7280", fontSize: "12px", margin: 0 }}>
-              {s.sub}
-            </p>
-          </div>
-        ))}
+        {stats === null ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} style={{
+              background: "#1F2937", border: "1px solid #374151",
+              borderRadius: "10px", padding: "20px", opacity: 0.5,
+            }}>
+              <div style={{ background: "#374151", height: 12, width: "60%", borderRadius: 4, marginBottom: 12 }} />
+              <div style={{ background: "#374151", height: 28, width: "40%", borderRadius: 4, marginBottom: 8 }} />
+              <div style={{ background: "#374151", height: 10, width: "50%", borderRadius: 4 }} />
+            </div>
+          ))
+        ) : (
+          stats.map((s) => (
+            <div key={s.label} style={{
+              background: "#1F2937",
+              border: `1px solid #374151`,
+              borderRadius: "10px",
+              padding: "20px",
+              borderLeft: `4px solid ${s.color}`,
+            }}>
+              <p style={{ color: "#6B7280", fontSize: "12px", margin: "0 0 8px 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                {s.label}
+              </p>
+              <p style={{ color: "#fff", fontSize: "32px", fontWeight: "bold", margin: "0 0 4px 0", lineHeight: 1 }}>
+                {s.value}
+              </p>
+              <p style={{ color: "#6B7280", fontSize: "12px", margin: 0 }}>
+                {s.sub}
+              </p>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Trabajos en curso */}
@@ -121,49 +168,65 @@ export default function Dashboard() {
           </button>
         </div>
 
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ borderBottom: "1px solid #374151" }}>
-              {["Cliente", "Tipo", "Ubicación", "Estado"].map((h) => (
-                <th key={h} style={{
-                  color: "#6B7280", fontSize: "11px", textAlign: "left",
-                  padding: "10px 20px", textTransform: "uppercase", letterSpacing: "0.05em",
-                  fontWeight: "600",
-                }}>
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {trabajosEnCursoMock.map((t, i, arr) => (
-              <tr key={t.id}
-                style={{
-                  borderBottom: i < arr.length - 1 ? "1px solid #374151" : "none",
-                  transition: "background 0.15s",
-                }}
-                onMouseOver={e => e.currentTarget.style.background = "#263244"}
-                onMouseOut={e => e.currentTarget.style.background = "transparent"}
-              >
-                <td style={{ padding: "12px 20px", color: "#fff",    fontSize: "14px" }}>{t.cliente}</td>
-                <td style={{ padding: "12px 20px", color: "#6B7280", fontSize: "14px" }}>{t.tipo}</td>
-                <td style={{ padding: "12px 20px", color: "#6B7280", fontSize: "14px" }}>{t.ubicacion}</td>
-                <td style={{ padding: "12px 20px" }}>
-                  <span style={{
-                    background: estadoColor[t.estado]?.bg ?? "#1a1a1a",
-                    color: estadoColor[t.estado]?.text ?? "#fff",
-                    fontSize: "12px",
-                    padding: "3px 10px",
-                    borderRadius: "999px",
-                    fontWeight: "500",
+        {trabajos === null ? (
+          <div style={{ padding: "32px", textAlign: "center", color: "#6B7280", fontSize: "14px" }}>
+            Cargando trabajos...
+          </div>
+        ) : trabajos.length === 0 ? (
+          <div style={{ padding: "32px", textAlign: "center", color: "#6B7280", fontSize: "14px" }}>
+            No hay trabajos en curso.
+          </div>
+        ) : (
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ borderBottom: "1px solid #374151" }}>
+                {["Cliente", "Tipo", "Ubicación", "Estado"].map((h) => (
+                  <th key={h} style={{
+                    color: "#6B7280", fontSize: "11px", textAlign: "left",
+                    padding: "10px 20px", textTransform: "uppercase", letterSpacing: "0.05em",
+                    fontWeight: "600",
                   }}>
-                    {t.estado}
-                  </span>
-                </td>
+                    {h}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {trabajos.map((t, i, arr) => (
+                <tr key={t.id}
+                  style={{
+                    borderBottom: i < arr.length - 1 ? "1px solid #374151" : "none",
+                    transition: "background 0.15s",
+                  }}
+                  onMouseOver={e => e.currentTarget.style.background = "#263244"}
+                  onMouseOut={e => e.currentTarget.style.background = "transparent"}
+                >
+                  <td style={{ padding: "12px 20px", color: "#fff", fontSize: "14px" }}>
+                    {t.cliente_nombre ?? t.cliente ?? "—"}
+                  </td>
+                  <td style={{ padding: "12px 20px", color: "#6B7280", fontSize: "14px" }}>
+                    {t.tipo_servicio ?? "—"}
+                  </td>
+                  <td style={{ padding: "12px 20px", color: "#6B7280", fontSize: "14px" }}>
+                    {t.ubicacion}
+                  </td>
+                  <td style={{ padding: "12px 20px" }}>
+                    <span style={{
+                      background: estadoBadge[t.estado]?.bg ?? "#1a1a1a",
+                      color: estadoBadge[t.estado]?.text ?? "#fff",
+                      fontSize: "12px",
+                      padding: "3px 10px",
+                      borderRadius: "999px",
+                      fontWeight: "500",
+                    }}>
+                      {t.estado}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

@@ -1,15 +1,8 @@
 // src/pages/admin/GestionContactos.jsx
-import { useState } from "react";
-
-const leads = [
-  { id: 1,  nombre: "Carlos Méndez",   whatsapp: "5491112345678", email: "carlos@gmail.com",  servicio: "Excavación", descripcion: "Pozo séptico de 3 metros",         estado: "Nuevo",                 fecha: "12/05/2026", tipo: "lead"    },
-  { id: 2,  nombre: "Laura Gómez",     whatsapp: "5491187654321", email: "laura@gmail.com",   servicio: "Sanjeo",     descripcion: "Zanja para instalación de gas",    estado: "Contactado",            fecha: "11/05/2026", tipo: "lead"    },
-  { id: 3,  nombre: "Martín Herrera",  whatsapp: "5491198765432", email: "martin@gmail.com",  servicio: "Limpieza",   descripcion: "Limpieza de pozo ciego",           estado: "Nuevo",                 fecha: "10/05/2026", tipo: "lead"    },
-  { id: 4,  nombre: "Sofía Ramos",     whatsapp: "5491176543210", email: "sofia@gmail.com",   servicio: "Excavación", descripcion: "Pozo de agua, 5 metros",           estado: "Cerrado no concretado", fecha: "09/05/2026", tipo: "lead"    },
-  { id: 5,  nombre: "Ana Suárez",      whatsapp: "5491134567890", email: "ana@gmail.com",     servicio: "Sanjeo",     descripcion: "Zanja perimetral para cañería",    estado: "Cerrado exitoso",       fecha: "05/05/2026", tipo: "cliente" },
-  { id: 6,  nombre: "Jorge Villalba",  whatsapp: "5491145678901", email: "jorge@gmail.com",   servicio: "Limpieza",   descripcion: "Limpieza y mantenimiento",         estado: "Cerrado exitoso",       fecha: "02/05/2026", tipo: "cliente" },
-  { id: 7,  nombre: "Roberto Díaz",    whatsapp: "5491156789012", email: "roberto@gmail.com", servicio: "Excavación", descripcion: "Pozo séptico doble cámara",        estado: "Cerrado exitoso",       fecha: "28/04/2026", tipo: "cliente" },
-];
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { apiFetch } from "../../services/api";
+import { formatDate } from "../../utils/formatters";
 
 const estadoConfig = {
   "Nuevo":                 { bg: "#1a2a1a", text: "#10B981" },
@@ -19,7 +12,6 @@ const estadoConfig = {
 };
 
 const tabs = ["Todos", "Leads", "Clientes"];
-
 const estadoOptions = [
   "Nuevo",
   "Contactado",
@@ -28,29 +20,76 @@ const estadoOptions = [
 ];
 
 export default function GestionContactos() {
+  const navigate = useNavigate(); // ← nuevo
+
   const [tabActiva, setTabActiva] = useState("Todos");
   const [filtroEstado, setFiltroEstado] = useState("Todos");
-  const [data, setData] = useState(leads);
 
-  const filtrados = data.filter((c) => {
+  const [leads, setLeads] = useState([]);
+  const [clientes, setClientes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelado = false;
+
+    async function fetchContactos() {
+      try {
+        const [leadsData, clientesData] = await Promise.all([
+          apiFetch("/leads"),
+          apiFetch("/clientes"),
+        ]);
+
+        if (!cancelado) {
+          setLeads(Array.isArray(leadsData) ? leadsData : []);
+          setClientes(Array.isArray(clientesData) ? clientesData : []);
+          setError("");
+        }
+      } catch (err) {
+        if (!cancelado) {
+          console.error(err);
+          setError("No se pudieron cargar los contactos.");
+        }
+      } finally {
+        if (!cancelado) setLoading(false);
+      }
+    }
+
+    fetchContactos();
+    return () => { cancelado = true; };
+  }, []);
+
+  const todos = [
+    ...leads.map((l) => ({ ...l, tipo: "lead" })),
+    ...clientes.map((c) => ({ ...c, tipo: "cliente" })),
+  ];
+
+  const filtrados = todos.filter((item) => {
     const matchTab =
       tabActiva === "Todos" ||
-      (tabActiva === "Leads" && c.tipo === "lead") ||
-      (tabActiva === "Clientes" && c.tipo === "cliente");
-    const matchEstado = filtroEstado === "Todos" || c.estado === filtroEstado;
+      (tabActiva === "Leads" && item.tipo === "lead") ||
+      (tabActiva === "Clientes" && item.tipo === "cliente");
+    const matchEstado = filtroEstado === "Todos" || item.estado === filtroEstado;
     return matchTab && matchEstado;
   });
 
-  function cambiarEstado(id, nuevoEstado) {
-    setData((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, estado: nuevoEstado } : c))
-    );
+  async function cambiarEstadoLead(id, nuevoEstado) {
+    try {
+      await apiFetch(`/leads/${id}/estado`, {
+        method: "PUT",
+        body: { estado: nuevoEstado },
+      });
+      setLeads((prev) =>
+        prev.map((l) => (l.id === id ? { ...l, estado: nuevoEstado } : l))
+      );
+    } catch (err) {
+      console.error("Error al cambiar estado:", err);
+      alert("No se pudo actualizar el estado.");
+    }
   }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-
-      {/* Encabezado */}
       <div>
         <h1 style={{ color: "#fff", fontSize: "22px", fontWeight: "bold", margin: 0 }}>
           Gestión de Contactos
@@ -60,10 +99,16 @@ export default function GestionContactos() {
         </p>
       </div>
 
-      {/* Tabs + Filtro */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+      {error && (
+        <div style={{
+          background: "#2a1a1a", border: "1px solid #EF4444",
+          borderRadius: "6px", color: "#EF4444", padding: "12px 16px", fontSize: "14px",
+        }}>
+          {error}
+        </div>
+      )}
 
-        {/* Tabs */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
         <div style={{ display: "flex", gap: "4px", background: "#1F2937", borderRadius: "8px", padding: "4px" }}>
           {tabs.map((tab) => (
             <button
@@ -86,7 +131,6 @@ export default function GestionContactos() {
           ))}
         </div>
 
-        {/* Filtro estado */}
         <select
           value={filtroEstado}
           onChange={(e) => setFiltroEstado(e.target.value)}
@@ -107,38 +151,39 @@ export default function GestionContactos() {
         </select>
       </div>
 
-      {/* Tabla */}
       <div style={{
         background: "#1F2937",
         border: "1px solid #374151",
         borderRadius: "10px",
         overflow: "hidden",
       }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ borderBottom: "1px solid #374151" }}>
-              {["Nombre", "WhatsApp", "Servicio", "Descripción", "Estado", "Fecha", ""].map((h) => (
-                <th key={h} style={{
-                  color: "#6B7280", fontSize: "11px", textAlign: "left",
-                  padding: "10px 16px", textTransform: "uppercase",
-                  letterSpacing: "0.05em", fontWeight: "600",
-                }}>
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filtrados.length === 0 ? (
-              <tr>
-                <td colSpan={7} style={{ padding: "32px", textAlign: "center", color: "#6B7280", fontSize: "14px" }}>
-                  No hay contactos que coincidan con los filtros.
-                </td>
+        {loading ? (
+          <div style={{ padding: "32px", textAlign: "center", color: "#6B7280", fontSize: "14px" }}>
+            Cargando contactos...
+          </div>
+        ) : filtrados.length === 0 ? (
+          <div style={{ padding: "32px", textAlign: "center", color: "#6B7280", fontSize: "14px" }}>
+            No hay contactos que coincidan con los filtros.
+          </div>
+        ) : (
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ borderBottom: "1px solid #374151" }}>
+                {["Nombre", "WhatsApp", "Servicio", "Descripción", "Estado", "Fecha", "Acciones"].map((h) => (
+                  <th key={h} style={{
+                    color: "#6B7280", fontSize: "11px", textAlign: "left",
+                    padding: "10px 16px", textTransform: "uppercase",
+                    letterSpacing: "0.05em", fontWeight: "600",
+                  }}>
+                    {h}
+                  </th>
+                ))}
               </tr>
-            ) : (
-              filtrados.map((c, i) => (
+            </thead>
+            <tbody>
+              {filtrados.map((c, i) => (
                 <tr
-                  key={c.id}
+                  key={`${c.tipo}-${c.id}`}
                   style={{
                     borderBottom: i < filtrados.length - 1 ? "1px solid #374151" : "none",
                     transition: "background 0.15s",
@@ -146,7 +191,6 @@ export default function GestionContactos() {
                   onMouseOver={e => e.currentTarget.style.background = "#263244"}
                   onMouseOut={e => e.currentTarget.style.background = "transparent"}
                 >
-                  {/* Nombre + tipo */}
                   <td style={{ padding: "12px 16px" }}>
                     <div style={{ color: "#fff", fontSize: "14px" }}>{c.nombre}</div>
                     <div style={{
@@ -164,7 +208,6 @@ export default function GestionContactos() {
                     </div>
                   </td>
 
-                  {/* WhatsApp */}
                   <td style={{ padding: "12px 16px" }}>
                     <a
                       href={`https://wa.me/${c.whatsapp}`}
@@ -176,60 +219,86 @@ export default function GestionContactos() {
                     </a>
                   </td>
 
-                  {/* Servicio */}
                   <td style={{ padding: "12px 16px", color: "#6B7280", fontSize: "13px" }}>
-                    {c.servicio}
+                    {c.servicio ?? "—"}
                   </td>
 
-                  {/* Descripción */}
                   <td style={{ padding: "12px 16px", color: "#6B7280", fontSize: "13px", maxWidth: "200px" }}>
                     <span style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                      {c.descripcion}
+                      {c.descripcion ?? "—"}
                     </span>
                   </td>
 
-                  {/* Estado */}
                   <td style={{ padding: "12px 16px" }}>
-                    <select
-                      value={c.estado}
-                      onChange={(e) => cambiarEstado(c.id, e.target.value)}
-                      style={{
+                    {c.tipo === "lead" ? (
+                      <select
+                        value={c.estado}
+                        onChange={(e) => cambiarEstadoLead(c.id, e.target.value)}
+                        style={{
+                          background: estadoConfig[c.estado]?.bg ?? "#1a1a1a",
+                          color: estadoConfig[c.estado]?.text ?? "#fff",
+                          border: "none",
+                          borderRadius: "999px",
+                          fontSize: "12px",
+                          padding: "4px 10px",
+                          cursor: "pointer",
+                          fontWeight: "500",
+                        }}
+                      >
+                        {estadoOptions.map((op) => (
+                          <option key={op} value={op}>{op}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span style={{
                         background: estadoConfig[c.estado]?.bg ?? "#1a1a1a",
                         color: estadoConfig[c.estado]?.text ?? "#fff",
-                        border: "none",
-                        borderRadius: "999px",
                         fontSize: "12px",
                         padding: "4px 10px",
-                        cursor: "pointer",
+                        borderRadius: "999px",
                         fontWeight: "500",
-                      }}
-                    >
-                      {estadoOptions.map((op) => (
-                        <option key={op} value={op}>{op}</option>
-                      ))}
-                    </select>
+                      }}>
+                        {c.estado}
+                      </span>
+                    )}
                   </td>
 
-                  {/* Fecha */}
                   <td style={{ padding: "12px 16px", color: "#6B7280", fontSize: "13px" }}>
-                    {c.fecha}
+                    {formatDate(c.fecha_creacion ?? c.fecha)}
                   </td>
 
-                  {/* Email */}
-                  <td style={{ padding: "12px 16px" }}>
-                    <a
-                      href={`mailto:${c.email}`}
-                      style={{ color: "#6B7280", fontSize: "12px", textDecoration: "none" }}
-                      title={c.email}
-                    >
-                      ✉️
-                    </a>
+                  {/* Acciones */}
+                  <td style={{ padding: "12px 16px", display: "flex", gap: "8px", alignItems: "center" }}>
+                    {c.email && (
+                      <a
+                        href={`mailto:${c.email}`}
+                        style={{ color: "#6B7280", fontSize: "12px", textDecoration: "none" }}
+                        title={c.email}
+                      >
+                        ✉️
+                      </a>
+                    )}
+                    {c.tipo === "cliente" && (
+<button
+  onClick={() => navigate(`/admin/clientes/${c.id}`, { state: { cliente: c } })}
+  style={{
+    background: "none", border: "1px solid #374151",
+    borderRadius: "6px", color: "#6B7280",
+    fontSize: "12px", padding: "5px 12px", cursor: "pointer",
+    transition: "all 0.15s",
+  }}
+  onMouseOver={e => { e.currentTarget.style.borderColor = "#F59E0B"; e.currentTarget.style.color = "#F59E0B"; }}
+  onMouseOut={e => { e.currentTarget.style.borderColor = "#374151"; e.currentTarget.style.color = "#6B7280"; }}
+>
+  Ver
+</button>
+                    )}
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

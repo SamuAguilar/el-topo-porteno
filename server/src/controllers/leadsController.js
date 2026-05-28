@@ -33,7 +33,7 @@ const getLeads = async (req, res) => {
     try {
         const buscar = req.query.buscar; // Capturamos el texto a buscar
         
-        let query = 'SELECT id, nombre, whatsapp, email, estado, fecha_creacion FROM leads';
+        let query = 'SELECT id, nombre, whatsapp, email, servicio, descripcion, estado, fecha_creacion FROM leads';
         const queryParams = [];
 
         // Si el frontend envía algo para buscar, filtramos con LIKE

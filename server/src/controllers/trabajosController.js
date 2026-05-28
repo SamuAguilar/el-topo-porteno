@@ -86,6 +86,7 @@ const getTrabajos = async (req, res) => {
                 c.nombre AS cliente_nombre, 
                 t.tipo_servicio, 
                 t.ubicacion, 
+                t.profundidad_estimada, 
                 t.estado, 
                 t.fecha_inicio, 
                 t.fecha_fin, 
