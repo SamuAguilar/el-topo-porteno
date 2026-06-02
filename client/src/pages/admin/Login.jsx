@@ -1,6 +1,9 @@
+// src/pages/admin/Login.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
+import Input from "../../components/ui/Input";
+import Button from "../../components/ui/Button";
 import { apiFetch } from "../../services/api";
 
 export default function Login() {
@@ -56,7 +59,6 @@ export default function Login() {
         width: "100%",
         maxWidth: "400px",
       }}>
-
         {/* Logo */}
         <div style={{ textAlign: "center", marginBottom: "32px" }}>
           <img
@@ -81,49 +83,25 @@ export default function Login() {
 
         {/* Formulario */}
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <label style={{ color: "#fff", fontSize: "13px", fontWeight: "500" }}>
-              Usuario
-            </label>
-            <input
-              type="text"
-              name="username"
-              value={form.username}
-              onChange={handleChange}
-              placeholder="Tu nombre de usuario"
-              style={{
-                background: "#0B0B0B",
-                border: `1px solid ${error ? "#EF4444" : "#374151"}`,
-                borderRadius: "6px",
-                padding: "10px 14px",
-                color: "#fff",
-                fontSize: "14px",
-                outline: "none",
-              }}
-            />
-          </div>
+          <Input
+            label="Usuario"
+            type="text"
+            name="username"
+            value={form.username}
+            onChange={handleChange}
+            placeholder="Tu nombre de usuario"
+            error={error ? " " : undefined} // Solo mostramos borde rojo, el mensaje general va abajo
+          />
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <label style={{ color: "#fff", fontSize: "13px", fontWeight: "500" }}>
-              Contraseña
-            </label>
-            <input
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              placeholder="Tu contraseña"
-              style={{
-                background: "#0B0B0B",
-                border: `1px solid ${error ? "#EF4444" : "#374151"}`,
-                borderRadius: "6px",
-                padding: "10px 14px",
-                color: "#fff",
-                fontSize: "14px",
-                outline: "none",
-              }}
-            />
-          </div>
+          <Input
+            label="Contraseña"
+            type="password"
+            name="password"
+            value={form.password}
+            onChange={handleChange}
+            placeholder="Tu contraseña"
+            error={error ? " " : undefined}
+          />
 
           {error && (
             <p style={{ color: "#EF4444", fontSize: "13px", margin: 0 }}>
@@ -131,25 +109,9 @@ export default function Login() {
             </p>
           )}
 
-          <button
-            type="submit"
-            style={{
-              background: "#F59E0B",
-              color: "#000",
-              fontWeight: "bold",
-              fontSize: "15px",
-              border: "none",
-              borderRadius: "6px",
-              padding: "12px",
-              cursor: "pointer",
-              marginTop: "8px",
-              transition: "background 0.2s",
-            }}
-            onMouseOver={e => e.currentTarget.style.background = "#D97706"}
-            onMouseOut={e => e.currentTarget.style.background = "#F59E0B"}
-          >
+          <Button type="submit" variant="primary" size="md" style={{ marginTop: "8px" }}>
             Ingresar
-          </button>
+          </Button>
         </form>
       </div>
     </div>

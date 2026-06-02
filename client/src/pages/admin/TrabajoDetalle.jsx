@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiFetch } from "../../services/api";
 import { formatDate, normalizarEstado, estadoParaApi } from "../../utils/formatters";
+import DataTable from "../../components/ui/DataTable";
+import Badge from "../../components/ui/Badge";
 
 const estadoConfig = {
   "Presupuestado": { bg: "#1a1a2a", text: "#6B7280" },
@@ -24,15 +26,19 @@ export default function TrabajoDetalle() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [editandoPrecio, setEditandoPrecio] = useState(false);
+  const [nuevoPrecio, setNuevoPrecio] = useState("");
+
+  // Estados para el comentario al cambiar de estado
+  const [comentarioCambio, setComentarioCambio] = useState("");
+
   useEffect(() => {
     let cancelado = false;
 
     async function fetchDetalle() {
       try {
-        // Obtener la lista de trabajos y buscar el que coincida con el id
         const resTrabajos = await apiFetch("/trabajos");
         const trabajosRaw = resTrabajos.data || [];
-        // Normalizar estados de todos los trabajos
         const trabajosNormalizados = trabajosRaw.map(t => ({
           ...t,
           estado: normalizarEstado(t.estado),
@@ -41,7 +47,6 @@ export default function TrabajoDetalle() {
 
         if (!trabajoActual) throw new Error("Trabajo no encontrado");
 
-        // Obtener historial
         const historialData = await apiFetch(`/trabajos/${id}/historial`);
         const historialNormalizado = Array.isArray(historialData)
           ? historialData.map(h => ({
@@ -74,8 +79,13 @@ export default function TrabajoDetalle() {
     try {
       await apiFetch(`/trabajos/${id}/estado`, {
         method: "PUT",
-        body: { estado_nuevo: estadoParaApi(nuevoEstado) },
+        body: {
+          estado_nuevo: estadoParaApi(nuevoEstado),
+          notas: comentarioCambio.trim() || null, // envía null si está vacío
+        },
       });
+      // Limpiar comentario después de éxito
+      setComentarioCambio("");
       // Actualizar localmente
       setTrabajo(prev => ({ ...prev, estado: nuevoEstado }));
       // Recargar historial
@@ -93,6 +103,34 @@ export default function TrabajoDetalle() {
       alert("No se pudo actualizar el estado.");
     }
   }
+
+  async function guardarPrecio() {
+    const precioNumerico = parseFloat(nuevoPrecio);
+    if (isNaN(precioNumerico) || precioNumerico < 0) {
+      alert("Ingresá un precio válido.");
+      return;
+    }
+
+    try {
+      await apiFetch(`/trabajos/${id}`, {
+        method: "PUT",
+        body: { precio: precioNumerico },
+      });
+      setTrabajo(prev => ({ ...prev, precio: precioNumerico }));
+      setEditandoPrecio(false);
+    } catch (err) {
+      console.error(err);
+      alert("No se pudo actualizar el precio.");
+    }
+  }
+
+  const columnasHistorial = [
+    { key: "fecha", label: "Fecha", render: (h) => formatDate(h.fecha_cambio), cellStyle: { color: "#6B7280", fontSize: "13px" } },
+    { key: "anterior", label: "Estado anterior", render: (h) => <Badge estado={h.estado_anterior} config={estadoConfig} /> },
+    { key: "nuevo", label: "Estado nuevo", render: (h) => <Badge estado={h.estado_nuevo} config={estadoConfig} /> },
+    { key: "usuario", label: "Usuario", render: (h) => h.modificado_por ?? "—", cellStyle: { color: "#6B7280", fontSize: "13px" } },
+    { key: "comentario", label: "Comentario", render: (h) => h.comentario ?? "—", cellStyle: { color: "#fff", fontSize: "13px" } },
+  ];
 
   if (loading) {
     return (
@@ -146,83 +184,118 @@ export default function TrabajoDetalle() {
             <span style={{ color: "#fff", fontSize: "14px" }}>{value}</span>
           </div>
         ))}
+
+        {/* Estado */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <div>
+            <span style={{ color: "#6B7280", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Estado</span>
+            <select
+              value={trabajo.estado}
+              onChange={(e) => cambiarEstado(e.target.value)}
+              style={{
+                marginTop: "4px",
+                background: estadoConfig[trabajo.estado]?.bg ?? "#1a1a1a",
+                color: estadoConfig[trabajo.estado]?.text ?? "#fff",
+                border: "none", borderRadius: "999px",
+                fontSize: "12px", padding: "4px 10px",
+                cursor: "pointer", fontWeight: "500",
+                width: "fit-content",
+                display: "block",
+              }}
+            >
+              {estadoOptions.map((op) => (
+                <option key={op} value={op}>{op}</option>
+              ))}
+            </select>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+            <span style={{ color: "#6B7280", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Comentario (opcional)</span>
+            <input
+              type="text"
+              value={comentarioCambio}
+              onChange={(e) => setComentarioCambio(e.target.value)}
+              placeholder="Motivo del cambio..."
+              style={{
+                background: "#0B0B0B",
+                border: "1px solid #374151",
+                borderRadius: "6px",
+                padding: "6px 10px",
+                color: "#fff",
+                fontSize: "13px",
+                outline: "none",
+                width: "100%",
+                maxWidth: "220px",
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Precio editable */}
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-          <span style={{ color: "#6B7280", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Estado</span>
-          <select
-            value={trabajo.estado}
-            onChange={(e) => cambiarEstado(e.target.value)}
-            style={{
-              background: estadoConfig[trabajo.estado]?.bg ?? "#1a1a1a",
-              color: estadoConfig[trabajo.estado]?.text ?? "#fff",
-              border: "none", borderRadius: "999px",
-              fontSize: "12px", padding: "4px 10px",
-              cursor: "pointer", fontWeight: "500",
-              width: "fit-content",
-            }}
-          >
-            {estadoOptions.map((op) => (
-              <option key={op} value={op}>{op}</option>
-            ))}
-          </select>
+          <span style={{ color: "#6B7280", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Precio</span>
+          {editandoPrecio ? (
+            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+              <input
+                type="number"
+                value={nuevoPrecio}
+                onChange={(e) => setNuevoPrecio(e.target.value)}
+                style={{
+                  background: "#0B0B0B", border: "1px solid #374151",
+                  borderRadius: "6px", padding: "6px 10px", color: "#fff",
+                  fontSize: "14px", width: "120px", outline: "none",
+                }}
+              />
+              <button
+                onClick={guardarPrecio}
+                style={{
+                  background: "#F59E0B", color: "#000", border: "none",
+                  borderRadius: "6px", padding: "6px 14px", fontSize: "13px",
+                  fontWeight: "bold", cursor: "pointer",
+                }}
+              >
+                Guardar
+              </button>
+              <button
+                onClick={() => setEditandoPrecio(false)}
+                style={{
+                  background: "none", border: "1px solid #374151",
+                  borderRadius: "6px", color: "#6B7280", fontSize: "13px",
+                  padding: "6px 14px", cursor: "pointer",
+                }}
+              >
+                Cancelar
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+              <span style={{ color: "#F59E0B", fontSize: "16px", fontWeight: "bold" }}>
+                {trabajo.precio != null ? `$${Number(trabajo.precio).toLocaleString("es-AR")}` : "—"}
+              </span>
+              <button
+                onClick={() => {
+                  setNuevoPrecio(trabajo.precio ?? "");
+                  setEditandoPrecio(true);
+                }}
+                style={{
+                  background: "none", border: "1px solid #374151",
+                  borderRadius: "6px", color: "#6B7280", fontSize: "12px",
+                  padding: "4px 10px", cursor: "pointer",
+                }}
+              >
+                Editar
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Historial */}
-      <div style={{ background: "#1F2937", border: "1px solid #374151", borderRadius: "10px", overflow: "hidden" }}>
-        <div style={{ padding: "16px 20px", borderBottom: "1px solid #374151" }}>
-          <h2 style={{ color: "#fff", fontSize: "15px", fontWeight: "bold", margin: 0 }}>Historial de cambios</h2>
-        </div>
-        {historial.length === 0 ? (
-          <div style={{ padding: "24px 20px", color: "#6B7280", fontSize: "14px" }}>
-            Sin movimientos registrados.
-          </div>
-        ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ borderBottom: "1px solid #374151" }}>
-                {["Fecha", "Estado anterior", "Estado nuevo", "Usuario", "Comentario"].map((h) => (
-                  <th key={h} style={{ color: "#6B7280", fontSize: "11px", textAlign: "left", padding: "10px 16px", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: "600" }}>
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {historial.map((entry, i) => (
-                <tr key={entry.id || i} style={{ borderBottom: i < historial.length - 1 ? "1px solid #374151" : "none" }}>
-                  <td style={{ padding: "10px 16px", color: "#6B7280", fontSize: "13px" }}>
-                    {formatDate(entry.fecha_cambio)}
-                  </td>
-                  <td style={{ padding: "10px 16px" }}>
-                    <span style={{
-                      background: estadoConfig[entry.estado_anterior]?.bg ?? "#1a1a1a",
-                      color: estadoConfig[entry.estado_anterior]?.text ?? "#fff",
-                      fontSize: "12px", padding: "3px 10px", borderRadius: "999px", fontWeight: "500",
-                    }}>
-                      {entry.estado_anterior}
-                    </span>
-                  </td>
-                  <td style={{ padding: "10px 16px" }}>
-                    <span style={{
-                      background: estadoConfig[entry.estado_nuevo]?.bg ?? "#1a1a1a",
-                      color: estadoConfig[entry.estado_nuevo]?.text ?? "#fff",
-                      fontSize: "12px", padding: "3px 10px", borderRadius: "999px", fontWeight: "500",
-                    }}>
-                      {entry.estado_nuevo}
-                    </span>
-                  </td>
-                  <td style={{ padding: "10px 16px", color: "#6B7280", fontSize: "13px" }}>
-                    {entry.modificado_por ?? "—"}
-                  </td>
-                  <td style={{ padding: "10px 16px", color: "#fff", fontSize: "13px" }}>
-                    {entry.comentario ?? "—"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      <DataTable
+        columns={columnasHistorial}
+        data={historial}
+        emptyMessage="Sin movimientos registrados."
+        keyExtractor={(h) => h.id}
+      />
     </div>
   );
 }

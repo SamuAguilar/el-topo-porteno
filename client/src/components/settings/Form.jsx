@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { apiFetch } from "../../services/api";
 
-const servicios = ["Excavación — Pozo séptico", "Excavación — Pozo de agua", "Sanjeo", "Limpieza de pozos"];
+const servicios = [
+  { label: "Excavación — Pozo séptico", value: "Excavacion" },
+  { label: "Excavación — Pozo de agua", value: "Excavacion" },
+  { label: "Sanjeo",                     value: "Sanjeo" },
+  { label: "Limpieza de pozos",          value: "Limpieza" },
+];
 const initialForm = { nombre: "", whatsapp: "", email: "", servicio: "", descripcion: "" };
 
 export default function Form() {
@@ -132,12 +137,14 @@ export default function Form() {
           <div className="flex flex-col gap-1.5">
             <label className="text-white text-sm font-medium">Tipo de servicio</label>
             <select
-              name="servicio" value={form.servicio} onChange={handleChange}
-              className={`bg-[#1F2937] text-sm rounded-lg px-4 py-3 border outline-none focus:ring-2 focus:ring-[#F59E0B] focus:border-transparent transition cursor-pointer ${errors.servicio ? "border-red-500" : "border-[#374151]"} ${!form.servicio ? "text-[#6B7280]" : "text-white"}`}
+              name="servicio"
+              value={form.servicio}
+              onChange={handleChange}
+              className={`...`}
             >
               <option value="" disabled>Seleccioná un servicio</option>
               {servicios.map((s) => (
-                <option key={s} value={s}>{s}</option>
+                <option key={s.value} value={s.value}>{s.label}</option>
               ))}
             </select>
             {errors.servicio && <p className="text-red-400 text-xs">{errors.servicio}</p>}

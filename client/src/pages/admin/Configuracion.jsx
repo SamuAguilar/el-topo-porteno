@@ -1,6 +1,7 @@
 // src/pages/admin/Configuracion.jsx
 import { useEffect, useState } from "react";
 import { apiFetch } from "../../services/api";
+import DataTable from "../../components/ui/DataTable";
 
 const serviciosMock = [
   "Excavación — Pozo séptico",
@@ -25,24 +26,20 @@ export default function Configuracion() {
   const [valorEdit, setValorEdit] = useState("");
   const [mensaje, setMensaje] = useState("");
 
-  // Intentar cargar configuración desde el backend (si existe)
   useEffect(() => {
     let cancelado = false;
 
     async function fetchConfig() {
       try {
-        // TODO: cambiar la ruta cuando el backend implemente el endpoint
-        const data = await apiFetch("/configuracion"); // Ejemplo: GET /api/configuracion
+        const data = await apiFetch("/configuracion");
         if (!cancelado) {
           if (data && typeof data === "object") {
-            // Asumimos que la respuesta tiene { servicios: [...], precios: {...} }
             if (Array.isArray(data.servicios)) setServicios(data.servicios);
             if (data.precios && typeof data.precios === "object") setPrecios(data.precios);
           }
           setError("");
         }
       } catch {
-        // Si el endpoint no existe (404), usamos los mocks silenciosamente
         if (!cancelado) {
           console.warn("Endpoint de configuración no disponible, usando datos locales.");
         }
@@ -73,23 +70,100 @@ export default function Configuracion() {
       return;
     }
 
-    // Actualizar localmente siempre (optimista)
     setPrecios(prev => ({ ...prev, [servicio]: nuevoPrecio }));
     setEditando(null);
     setMensaje(`Precio de "${servicio}" actualizado correctamente.`);
     setTimeout(() => setMensaje(""), 3000);
 
-    // Intentar persistir en el backend (si el endpoint existe)
     try {
       await apiFetch("/configuracion", {
-        method: "PUT", // o POST, según defina el backend
+        method: "PUT",
         body: { servicio, precio: nuevoPrecio },
       });
     } catch {
       console.warn("No se pudo guardar en el servidor (¿endpoint no implementado?)");
-      // No revertimos el cambio local para no afectar la UX
     }
   }
+
+  // Convertimos los servicios en objetos para DataTable
+  const filas = servicios.map((servicio) => ({
+    servicio,
+    precio: precios[servicio],
+  }));
+
+  const columnas = [
+    {
+      key: "servicio",
+      label: "Servicio",
+      render: (fila) => fila.servicio,
+      cellStyle: { color: "#fff", fontSize: "14px" },
+    },
+    {
+      key: "precio",
+      label: "Precio actual",
+      render: (fila) => (
+        editando === fila.servicio ? (
+          <input
+            type="number"
+            value={valorEdit}
+            onChange={(e) => setValorEdit(e.target.value)}
+            style={{
+              background: "#0B0B0B", border: "1px solid #374151",
+              borderRadius: "6px", padding: "6px 10px", color: "#fff",
+              fontSize: "14px", width: "120px", outline: "none",
+            }}
+          />
+        ) : (
+          <span style={{ color: "#F59E0B", fontSize: "16px", fontWeight: "bold" }}>
+            ${fila.precio?.toLocaleString("es-AR") ?? "—"}
+          </span>
+        )
+      ),
+    },
+    {
+      key: "acciones",
+      label: "",
+      render: (fila) => (
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          {editando === fila.servicio ? (
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button
+                onClick={() => guardarPrecio(fila.servicio)}
+                style={{
+                  background: "#F59E0B", color: "#000", border: "none",
+                  borderRadius: "6px", padding: "6px 14px", fontSize: "13px",
+                  fontWeight: "bold", cursor: "pointer",
+                }}
+              >
+                Guardar
+              </button>
+              <button
+                onClick={cancelarEdicion}
+                style={{
+                  background: "none", border: "1px solid #374151",
+                  borderRadius: "6px", color: "#6B7280", fontSize: "13px",
+                  padding: "6px 14px", cursor: "pointer",
+                }}
+              >
+                Cancelar
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => iniciarEdicion(fila.servicio)}
+              style={{
+                background: "none", border: "1px solid #374151",
+                borderRadius: "6px", color: "#6B7280", fontSize: "13px",
+                padding: "6px 14px", cursor: "pointer",
+              }}
+            >
+              Editar
+            </button>
+          )}
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
@@ -101,12 +175,6 @@ export default function Configuracion() {
           Precios de referencia por tipo de servicio
         </p>
       </div>
-
-      {loading && (
-        <div style={{ color: "#6B7280", fontSize: "14px", textAlign: "center", padding: "16px" }}>
-          Cargando configuración...
-        </div>
-      )}
 
       {error && (
         <div style={{
@@ -126,87 +194,13 @@ export default function Configuracion() {
         </div>
       )}
 
-      {!loading && (
-        <div style={{ background: "#1F2937", border: "1px solid #374151", borderRadius: "10px", overflow: "hidden" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ borderBottom: "1px solid #374151" }}>
-                {["Servicio", "Precio actual", ""].map((h) => (
-                  <th key={h} style={{
-                    color: "#6B7280", fontSize: "11px", textAlign: "left",
-                    padding: "10px 16px", textTransform: "uppercase",
-                    letterSpacing: "0.05em", fontWeight: "600",
-                  }}>
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {servicios.map((servicio) => (
-                <tr key={servicio} style={{ borderBottom: "1px solid #374151" }}>
-                  <td style={{ padding: "12px 16px", color: "#fff", fontSize: "14px" }}>{servicio}</td>
-                  <td style={{ padding: "12px 16px" }}>
-                    {editando === servicio ? (
-                      <input
-                        type="number"
-                        value={valorEdit}
-                        onChange={(e) => setValorEdit(e.target.value)}
-                        style={{
-                          background: "#0B0B0B", border: "1px solid #374151",
-                          borderRadius: "6px", padding: "6px 10px", color: "#fff",
-                          fontSize: "14px", width: "120px", outline: "none",
-                        }}
-                      />
-                    ) : (
-                      <span style={{ color: "#F59E0B", fontSize: "16px", fontWeight: "bold" }}>
-                        ${precios[servicio]?.toLocaleString("es-AR") ?? "—"}
-                      </span>
-                    )}
-                  </td>
-                  <td style={{ padding: "12px 16px", textAlign: "right" }}>
-                    {editando === servicio ? (
-                      <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-                        <button
-                          onClick={() => guardarPrecio(servicio)}
-                          style={{
-                            background: "#F59E0B", color: "#000", border: "none",
-                            borderRadius: "6px", padding: "6px 14px", fontSize: "13px",
-                            fontWeight: "bold", cursor: "pointer",
-                          }}
-                        >
-                          Guardar
-                        </button>
-                        <button
-                          onClick={cancelarEdicion}
-                          style={{
-                            background: "none", border: "1px solid #374151",
-                            borderRadius: "6px", color: "#6B7280", fontSize: "13px",
-                            padding: "6px 14px", cursor: "pointer",
-                          }}
-                        >
-                          Cancelar
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => iniciarEdicion(servicio)}
-                        style={{
-                          background: "none", border: "1px solid #374151",
-                          borderRadius: "6px", color: "#6B7280", fontSize: "13px",
-                          padding: "6px 14px", cursor: "pointer",
-                        }}
-                      >
-                        Editar
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <DataTable
+        columns={columnas}
+        data={filas}
+        loading={loading}
+        emptyMessage="No hay servicios configurados."
+        keyExtractor={(fila) => fila.servicio}
+      />
     </div>
   );
 }

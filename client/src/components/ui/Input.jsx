@@ -1,23 +1,31 @@
-export default function Input({ placeholder, label, error, type = "text", value, onChange }) {
+// src/components/ui/Input.jsx
+import PropTypes from "prop-types";
+
+export default function Input({ label, error, ...props }) {
   return (
-    <div className="flex flex-col gap-1">
+    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
       {label && (
-        <label className="text-white text-sm font-medium">{label}</label>
+        <label style={{ color: "#fff", fontSize: "13px", fontWeight: "500" }}>
+          {label}
+        </label>
       )}
       <input
-        type={type}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        className={`
-          bg-[#1F2937] text-white placeholder-[#6B7280] text-sm
-          border rounded px-4 py-2.5 w-full
-          focus:outline-none focus:ring-2 focus:ring-[#F59E0B] focus:border-transparent
-          transition
-          ${error ? "border-red-500" : "border-[#374151] hover:border-[#6B7280]"}
-        `}
+        {...props}
+        style={{
+          background: "#0B0B0B",
+          border: `1px solid ${error ? "#EF4444" : "#374151"}`,
+          borderRadius: "6px",
+          padding: "10px 14px",
+          color: "#fff",
+          fontSize: "14px",
+          outline: "none",
+        }}
       />
-      {error && <p className="text-red-400 text-xs">{error}</p>}
     </div>
   );
 }
+
+Input.propTypes = {
+  label: PropTypes.string,
+  error: PropTypes.string,
+};

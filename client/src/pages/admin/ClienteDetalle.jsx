@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { apiFetch } from "../../services/api";
 import { formatDate, normalizarEstado } from "../../utils/formatters";
+import DataTable from "../../components/ui/DataTable";
+import Badge from "../../components/ui/Badge";
 
 const estadoConfig = {
   "Presupuestado": { bg: "#1a1a2a", text: "#6B7280" },
@@ -18,10 +20,9 @@ export default function ClienteDetalle() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Obtener el cliente del state si viene desde la tabla, sino null
   const [cliente, setCliente] = useState(() => location.state?.cliente ?? null);
   const [trabajos, setTrabajos] = useState([]);
-  const [loading, setLoading] = useState(!cliente); // Si no tenemos cliente, mostramos carga
+  const [loading, setLoading] = useState(!cliente);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -52,13 +53,11 @@ export default function ClienteDetalle() {
       }
     }
 
-    // Si ya tenemos cliente (vino del state), solo cargamos trabajos
     if (cliente) {
       cargarTrabajos(cliente.id);
       return;
     }
 
-    // Si no hay cliente en state, intentamos obtenerlo de la API (fallback)
     async function fetchCliente() {
       try {
         const clienteData = await apiFetch(`/clientes/${id}`);
@@ -82,7 +81,34 @@ export default function ClienteDetalle() {
     };
   }, [id, cliente]);
 
-  // Mostrar carga mientras se espera
+  // Columnas para DataTable de trabajos
+  const columnasTrabajos = [
+    { key: "servicio", label: "Servicio", render: (t) => t.tipo_servicio ?? "—", cellStyle: { color: "#fff", fontSize: "14px" } },
+    { key: "ubicacion", label: "Ubicación", render: (t) => t.ubicacion, cellStyle: { color: "#6B7280", fontSize: "13px" } },
+    { key: "estado", label: "Estado", render: (t) => <Badge estado={t.estado} config={estadoConfig} /> },
+    { key: "inicio", label: "Inicio", render: (t) => formatDate(t.fecha_inicio), cellStyle: { color: "#6B7280", fontSize: "13px" } },
+    { key: "fin", label: "Fin", render: (t) => formatDate(t.fecha_fin), cellStyle: { color: "#6B7280", fontSize: "13px" } },
+    {
+      key: "accion",
+      label: "",
+      render: (t) => (
+        <button
+          onClick={() => navigate(`/admin/trabajos/${t.id}`)}
+          style={{
+            background: "none", border: "1px solid #374151",
+            borderRadius: "6px", color: "#6B7280",
+            fontSize: "12px", padding: "5px 12px", cursor: "pointer",
+            transition: "all 0.15s",
+          }}
+          onMouseOver={e => { e.currentTarget.style.borderColor = "#F59E0B"; e.currentTarget.style.color = "#F59E0B"; }}
+          onMouseOut={e => { e.currentTarget.style.borderColor = "#374151"; e.currentTarget.style.color = "#6B7280"; }}
+        >
+          Ver
+        </button>
+      ),
+    },
+  ];
+
   if (loading) {
     return (
       <div style={{ color: "#6B7280", padding: "32px", textAlign: "center" }}>
@@ -91,7 +117,6 @@ export default function ClienteDetalle() {
     );
   }
 
-  // Mostrar error si no hay cliente
   if (error || !cliente) {
     return (
       <div style={{ color: "#6B7280", padding: "32px", textAlign: "center" }}>
@@ -106,18 +131,15 @@ export default function ClienteDetalle() {
     );
   }
 
-  // Datos del cliente (ya están disponibles)
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-      {/* Volver */}
       <button
         onClick={() => navigate("/admin/gestion-contactos")}
-        style={{ background: "none", border: "none", color: "#6B7280", cursor: "pointer", fontSize: "13px", textAlign: "left", padding: 0, width: "fit-content" }}
+        style={{ background: "none", border: "none", color: "#6B7280", cursor: "pointer", fontSize: "13px", padding: 0, width: "fit-content" }}
       >
         ← Volver a Contactos
       </button>
 
-      {/* Encabezado */}
       <div>
         <h1 style={{ color: "#fff", fontSize: "22px", fontWeight: "bold", margin: 0 }}>
           {cliente.nombre}
@@ -127,7 +149,6 @@ export default function ClienteDetalle() {
         </p>
       </div>
 
-      {/* Datos del cliente */}
       <div style={{ background: "#1F2937", border: "1px solid #374151", borderRadius: "10px", padding: "20px", display: "flex", flexDirection: "column", gap: "16px" }}>
         <h2 style={{ color: "#fff", fontSize: "15px", fontWeight: "bold", margin: 0 }}>Datos de contacto</h2>
 
@@ -145,7 +166,6 @@ export default function ClienteDetalle() {
           ))}
         </div>
 
-        {/* Acciones */}
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", paddingTop: "4px" }}>
           <a
             href={`https://wa.me/${cliente.whatsapp}`}
@@ -157,7 +177,7 @@ export default function ClienteDetalle() {
               padding: "8px 16px", textDecoration: "none", display: "inline-block",
             }}
           >
-            💬 Abrir WhatsApp
+            WhatsApp
           </a>
           <a
             href={`mailto:${cliente.email}`}
@@ -167,92 +187,18 @@ export default function ClienteDetalle() {
               padding: "8px 16px", textDecoration: "none", display: "inline-block",
             }}
           >
-            ✉️ Enviar email
+            Email
           </a>
         </div>
       </div>
 
-      {/* Trabajos */}
-      <div style={{ background: "#1F2937", border: "1px solid #374151", borderRadius: "10px", overflow: "hidden" }}>
-        <div style={{ padding: "16px 20px", borderBottom: "1px solid #374151", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2 style={{ color: "#fff", fontSize: "15px", fontWeight: "bold", margin: 0 }}>
-            Trabajos ({trabajos.length})
-          </h2>
-        </div>
-
-        {trabajos.length === 0 ? (
-          <p style={{ color: "#6B7280", fontSize: "14px", padding: "24px 20px", margin: 0 }}>
-            Este cliente no tiene trabajos registrados.
-          </p>
-        ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ borderBottom: "1px solid #374151" }}>
-                {["Servicio", "Ubicación", "Estado", "Inicio", "Fin", ""].map((h) => (
-                  <th key={h} style={{
-                    color: "#6B7280", fontSize: "11px", textAlign: "left",
-                    padding: "10px 16px", textTransform: "uppercase",
-                    letterSpacing: "0.05em", fontWeight: "600",
-                  }}>
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {trabajos.map((t, i) => (
-                <tr
-                  key={t.id}
-                  style={{
-                    borderBottom: i < trabajos.length - 1 ? "1px solid #374151" : "none",
-                    transition: "background 0.15s",
-                  }}
-                  onMouseOver={e => e.currentTarget.style.background = "#263244"}
-                  onMouseOut={e => e.currentTarget.style.background = "transparent"}
-                >
-                  <td style={{ padding: "12px 16px", color: "#fff", fontSize: "14px" }}>
-                    {t.tipo_servicio ?? "—"}
-                  </td>
-                  <td style={{ padding: "12px 16px", color: "#6B7280", fontSize: "13px" }}>
-                    {t.ubicacion}
-                  </td>
-                  <td style={{ padding: "12px 16px" }}>
-                    <span style={{
-                      background: estadoConfig[t.estado]?.bg ?? "#1a1a1a",
-                      color: estadoConfig[t.estado]?.text ?? "#fff",
-                      fontSize: "12px", padding: "3px 10px",
-                      borderRadius: "999px", fontWeight: "500",
-                    }}>
-                      {t.estado}
-                    </span>
-                  </td>
-                  <td style={{ padding: "12px 16px", color: "#6B7280", fontSize: "13px" }}>
-                    {formatDate(t.fecha_inicio)}
-                  </td>
-                  <td style={{ padding: "12px 16px", color: "#6B7280", fontSize: "13px" }}>
-                    {formatDate(t.fecha_fin)}
-                  </td>
-                  <td style={{ padding: "12px 16px" }}>
-                    <button
-                      onClick={() => navigate(`/admin/trabajos/${t.id}`)}
-                      style={{
-                        background: "none", border: "1px solid #374151",
-                        borderRadius: "6px", color: "#6B7280",
-                        fontSize: "12px", padding: "5px 12px", cursor: "pointer",
-                        transition: "all 0.15s",
-                      }}
-                      onMouseOver={e => { e.currentTarget.style.borderColor = "#F59E0B"; e.currentTarget.style.color = "#F59E0B"; }}
-                      onMouseOut={e => { e.currentTarget.style.borderColor = "#374151"; e.currentTarget.style.color = "#6B7280"; }}
-                    >
-                      Ver
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      <DataTable
+        columns={columnasTrabajos}
+        data={trabajos}
+        loading={false}
+        emptyMessage="Este cliente no tiene trabajos registrados."
+        keyExtractor={(t) => t.id}
+      />
     </div>
   );
 }
