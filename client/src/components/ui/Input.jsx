@@ -1,26 +1,22 @@
-// src/components/ui/Input.jsx
 import PropTypes from "prop-types";
 
-export default function Input({ label, error, ...props }) {
+export default function Input({ label, error, className = "", ...props }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+    <div className="flex flex-col gap-1.5">
       {label && (
-        <label style={{ color: "#fff", fontSize: "13px", fontWeight: "500" }}>
+        <label className="text-white text-sm font-medium">
           {label}
         </label>
       )}
       <input
         {...props}
-        style={{
-          background: "#0B0B0B",
-          border: `1px solid ${error ? "#EF4444" : "#374151"}`,
-          borderRadius: "6px",
-          padding: "10px 14px",
-          color: "#fff",
-          fontSize: "14px",
-          outline: "none",
-        }}
+        className={`bg-brand-bg text-white text-sm rounded-lg px-3.5 py-2.5 outline-none border transition
+          ${error ? "border-red-500 focus:ring-2 focus:ring-red-500" : "border-brand-border focus:ring-2 focus:ring-brand-accent"}
+          ${className}`}
       />
+      {error && error !== " " && (
+        <p className="text-red-400 text-xs mt-0.5">{error}</p>
+      )}
     </div>
   );
 }
@@ -28,4 +24,5 @@ export default function Input({ label, error, ...props }) {
 Input.propTypes = {
   label: PropTypes.string,
   error: PropTypes.string,
+  className: PropTypes.string,
 };

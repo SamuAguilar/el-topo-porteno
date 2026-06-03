@@ -1,4 +1,3 @@
-// src/pages/admin/Dashboard.jsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../../services/api";
@@ -43,12 +42,10 @@ export default function Dashboard() {
         const dataStats = await apiFetch("/dashboard/stats");
         if (cancelado) return;
 
-        // La API devuelve { leads_nuevos, clientes_totales, trabajos_activos }
         const leadsNuevos = dataStats.leads_nuevos ?? 0;
         const clientesActivos = dataStats.clientes_totales ?? 0;
         const trabajosActivos = dataStats.trabajos_activos ?? 0;
 
-        // Para "Trabajos cerrados" necesitamos todos los trabajos
         const dataTrabajos = await apiFetch("/trabajos");
         if (cancelado) return;
 
@@ -60,16 +57,15 @@ export default function Dashboard() {
           t => t.estado === "En ejecución" || t.estado === "Aceptado"
         );
 
-        // Consideramos "cerrados" a los que están en estado Finalizado o Cerrado
         const cerrados = todosTrabajos.filter(
           t => t.estado === "Finalizado" || t.estado === "Cerrado"
         ).length;
 
         const tarjetas = [
-          { label: "Leads",       value: leadsNuevos,       color: cardColors[0] },
-          { label: "Clientes",   value: clientesActivos,   color: cardColors[1] },
-          { label: "Trabajos en curso",  value: trabajosActivos,   color: cardColors[2] },
-          { label: "Trabajos cerrados",  value: cerrados,          color: cardColors[3] },
+          { label: "Leads nuevos",       value: leadsNuevos,       sub: "Esta semana",       color: cardColors[0] },
+          { label: "Clientes activos",   value: clientesActivos,   sub: "Total registrados", color: cardColors[1] },
+          { label: "Trabajos en curso",  value: trabajosActivos,   sub: "En ejecución",      color: cardColors[2] },
+          { label: "Trabajos cerrados",  value: cerrados,          sub: "Historial total",   color: cardColors[3] },
         ];
 
         setStats(tarjetas);
@@ -88,31 +84,24 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
+    <div className="flex flex-col gap-8">
+      {/* Encabezado */}
       <div>
-        <h1 style={{ color: "#fff", fontSize: "22px", fontWeight: "bold", margin: 0 }}>
-          Dashboard
-        </h1>
-        <p style={{ color: "#6B7280", fontSize: "13px", marginTop: "4px" }}>
+        <h1 className="text-white text-xl font-bold m-0">Dashboard</h1>
+        <p className="text-brand-muted text-sm mt-1">
           Resumen general del negocio
         </p>
       </div>
 
+      {/* Mensaje de error global */}
       {error && (
-        <div style={{
-          background: "#2a1a1a", border: "1px solid #EF4444",
-          borderRadius: "6px", color: "#EF4444", padding: "12px 16px", fontSize: "14px",
-        }}>
+        <div className="bg-red-900/20 border border-red-500 rounded-md text-red-500 text-sm p-3">
           {error}
         </div>
       )}
 
       {/* KPIs */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-        gap: "16px",
-      }}>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
         {stats === null
           ? Array.from({ length: 4 }).map((_, i) => (
               <KpiCard key={i} loading label="" value="" />
@@ -137,20 +126,12 @@ export default function Dashboard() {
         keyExtractor={(t) => t.id}
       />
 
-      {/* Botón "Ver todos" (lo mantenemos fuera de la tabla por si queremos personalizarlo) */}
+      {/* Botón "Ver todos" */}
       {trabajos && trabajos.length > 0 && (
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <div className="flex justify-end">
           <button
             onClick={() => navigate("/admin/trabajos")}
-            style={{
-              background: "none",
-              border: "1px solid #374151",
-              borderRadius: "6px",
-              color: "#F59E0B",
-              fontSize: "12px",
-              padding: "6px 12px",
-              cursor: "pointer",
-            }}
+            className="bg-transparent border border-brand-border rounded-md text-brand-accent text-xs px-3 py-1.5 hover:border-brand-accent transition cursor-pointer"
           >
             Ver todos →
           </button>

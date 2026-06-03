@@ -1,21 +1,14 @@
-// src/components/ui/Badge.jsx
 import PropTypes from "prop-types";
 
-const defaultConfig = { bg: "#1a1a1a", text: "#fff" };
-
-export default function Badge({ estado, config }) {
+export default function Badge({ estado, config, className = "" }) {
+  const defaultConfig = { bg: "#1a1a1a", text: "#fff" };
   const { bg, text } = config[estado] || defaultConfig;
 
   return (
-    <span style={{
-      background: bg,
-      color: text,
-      fontSize: "12px",
-      padding: "3px 10px",
-      borderRadius: "999px",
-      fontWeight: "500",
-      whiteSpace: "nowrap",
-    }}>
+    <span
+      className={`inline-block text-xs px-2.5 py-0.5 rounded-full font-medium whitespace-nowrap ${className}`}
+      style={{ backgroundColor: bg, color: text }}
+    >
       {estado}
     </span>
   );
@@ -29,4 +22,5 @@ Badge.propTypes = {
       text: PropTypes.string,
     })
   ).isRequired,
+  className: PropTypes.string,
 };

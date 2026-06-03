@@ -1,4 +1,3 @@
-// src/pages/admin/GestionContactos.jsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../../services/api";
@@ -108,15 +107,14 @@ export default function GestionContactos() {
     }
   }
 
-  // Definición de columnas para DataTable
   const columnas = [
     {
       key: "nombre",
       label: "Nombre",
       render: (c) => (
         <div>
-          <div style={{ color: "#fff", fontSize: "14px" }}>{c.nombre}</div>
-          <Badge estado={c.tipo} config={tipoConfig} />
+          <div className="text-white text-sm">{c.nombre}</div>
+          <Badge estado={c.tipo} config={tipoConfig} className="mt-1" />
         </div>
       ),
     },
@@ -128,7 +126,7 @@ export default function GestionContactos() {
           href={`https://wa.me/${c.whatsapp}`}
           target="_blank"
           rel="noreferrer"
-          style={{ color: "#10B981", fontSize: "13px", textDecoration: "none" }}
+          className="text-emerald-500 text-sm no-underline"
         >
           {c.whatsapp}
         </a>
@@ -144,11 +142,11 @@ export default function GestionContactos() {
       key: "descripcion",
       label: "Descripción",
       render: (c) => (
-        <span style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+        <span className="line-clamp-2 text-brand-muted text-sm">
           {c.descripcion ?? "—"}
         </span>
       ),
-      cellStyle: { color: "#6B7280", fontSize: "13px", maxWidth: "200px" },
+      cellStyle: { maxWidth: "200px" },
     },
     {
       key: "estado",
@@ -158,19 +156,16 @@ export default function GestionContactos() {
           <select
             value={c.estado}
             onChange={(e) => cambiarEstadoLead(c.id, e.target.value)}
+            className="text-xs px-2.5 py-0.5 rounded-full font-medium cursor-pointer border-none outline-none"
             style={{
-              background: estadoConfig[c.estado]?.bg ?? "#1a1a1a",
+              backgroundColor: estadoConfig[c.estado]?.bg ?? "#1a1a1a",
               color: estadoConfig[c.estado]?.text ?? "#fff",
-              border: "none",
-              borderRadius: "999px",
-              fontSize: "12px",
-              padding: "4px 10px",
-              cursor: "pointer",
-              fontWeight: "500",
             }}
           >
             {estadoOptions.map((op) => (
-              <option key={op} value={op}>{op}</option>
+              <option key={op} value={op}>
+                {op}
+              </option>
             ))}
           </select>
         ) : (
@@ -196,14 +191,7 @@ export default function GestionContactos() {
         c.tipo === "cliente" ? (
           <button
             onClick={() => navigate(`/admin/clientes/${c.id}`, { state: { cliente: c } })}
-            style={{
-              background: "none", border: "1px solid #374151",
-              borderRadius: "6px", color: "#6B7280",
-              fontSize: "12px", padding: "5px 12px", cursor: "pointer",
-              transition: "all 0.15s",
-            }}
-            onMouseOver={e => { e.currentTarget.style.borderColor = "#F59E0B"; e.currentTarget.style.color = "#F59E0B"; }}
-            onMouseOut={e => { e.currentTarget.style.borderColor = "#374151"; e.currentTarget.style.color = "#6B7280"; }}
+            className="bg-transparent border border-brand-border rounded-md text-brand-muted text-xs px-3 py-1.5 hover:border-brand-accent hover:text-brand-accent transition cursor-pointer"
           >
             Ver
           </button>
@@ -212,42 +200,32 @@ export default function GestionContactos() {
   ];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+    <div className="flex flex-col gap-6">
+      {/* Encabezado */}
       <div>
-        <h1 style={{ color: "#fff", fontSize: "22px", fontWeight: "bold", margin: 0 }}>
-          Gestión de Contactos
-        </h1>
-        <p style={{ color: "#6B7280", fontSize: "13px", marginTop: "4px" }}>
-          Leads y clientes registrados
-        </p>
+        <h1 className="text-white text-xl font-bold m-0">Gestión de Contactos</h1>
+        <p className="text-brand-muted text-sm mt-1">Leads y clientes registrados</p>
       </div>
 
+      {/* Error */}
       {error && (
-        <div style={{
-          background: "#2a1a1a", border: "1px solid #EF4444",
-          borderRadius: "6px", color: "#EF4444", padding: "12px 16px", fontSize: "14px",
-        }}>
+        <div className="bg-red-900/20 border border-red-500 rounded-md text-red-500 text-sm p-3">
           {error}
         </div>
       )}
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
-        <div style={{ display: "flex", gap: "4px", background: "#1F2937", borderRadius: "8px", padding: "4px" }}>
+      {/* Tabs + Filtro */}
+      <div className="flex justify-between items-center flex-wrap gap-3">
+        <div className="flex gap-1 bg-brand-surface rounded-lg p-1">
           {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setTabActiva(tab)}
-              style={{
-                background: tabActiva === tab ? "#374151" : "none",
-                border: "none",
-                borderRadius: "6px",
-                color: tabActiva === tab ? "#fff" : "#6B7280",
-                fontSize: "13px",
-                fontWeight: tabActiva === tab ? "600" : "400",
-                padding: "6px 16px",
-                cursor: "pointer",
-                transition: "all 0.15s",
-              }}
+              className={`border-none rounded-md text-sm px-4 py-1.5 transition cursor-pointer ${
+                tabActiva === tab
+                  ? "bg-brand-border text-white font-semibold"
+                  : "bg-transparent text-brand-muted"
+              }`}
             >
               {tab}
             </button>
@@ -257,23 +235,18 @@ export default function GestionContactos() {
         <select
           value={filtroEstado}
           onChange={(e) => setFiltroEstado(e.target.value)}
-          style={{
-            background: "#1F2937",
-            border: "1px solid #374151",
-            borderRadius: "6px",
-            color: "#fff",
-            fontSize: "13px",
-            padding: "7px 12px",
-            cursor: "pointer",
-          }}
+          className="bg-brand-surface border border-brand-border rounded-md text-white text-sm px-3 py-1.5 cursor-pointer"
         >
           <option value="Todos">Todos los estados</option>
           {estadoOptions.map((e) => (
-            <option key={e} value={e}>{e}</option>
+            <option key={e} value={e}>
+              {e}
+            </option>
           ))}
         </select>
       </div>
 
+      {/* Tabla */}
       <DataTable
         columns={columnas}
         data={filtrados}

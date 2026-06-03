@@ -1,8 +1,10 @@
+import PropTypes from "prop-types";
+
 export default function Card({ title, subtitle, icon, children, variant = "default" }) {
   const variants = {
-    default:     "bg-[#1F2937] border border-[#374151]",
-    highlighted: "bg-[#1F2937] border-2 border-[#F59E0B]",
-    dark:        "bg-[#0B0B0B] border border-[#1F2937]",
+    default:     "bg-brand-surface border border-brand-border",
+    highlighted: "bg-brand-surface border-2 border-brand-accent",
+    dark:        "bg-brand-bg border border-brand-surface",
   };
 
   return (
@@ -12,9 +14,17 @@ export default function Card({ title, subtitle, icon, children, variant = "defau
       )}
       <div>
         <h3 className="text-white font-bold text-lg">{title}</h3>
-        {subtitle && <p className="text-[#F59E0B] text-sm font-medium mt-0.5">{subtitle}</p>}
+        {subtitle && <p className="text-brand-accent text-sm font-medium mt-0.5">{subtitle}</p>}
       </div>
-      <p className="text-[#6B7280] text-sm leading-relaxed">{children}</p>
+      <p className="text-brand-muted text-sm leading-relaxed">{children}</p>
     </div>
   );
 }
+
+Card.propTypes = {
+  title: PropTypes.string.isRequired,
+  subtitle: PropTypes.string,
+  icon: PropTypes.string,
+  children: PropTypes.node,
+  variant: PropTypes.oneOf(["default", "highlighted", "dark"]),
+};

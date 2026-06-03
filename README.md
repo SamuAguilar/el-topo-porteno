@@ -27,47 +27,85 @@ La empresa gestionaba sus presupuestos y consultas de forma completamente manual
 ```
 client/
 └── src/
-    ├── assets/                      # Logo e imágenes estáticas
-    ├── layouts/
-    │   ├── PublicLayout.jsx         # Marco del sitio público (Header + Outlet + Footer)
-    │   └── AdminLayout.jsx          # Marco del panel admin (Sidebar + Outlet)
-    │
-    ├── components/
-    │   ├── layout/                  # Componentes globales de estructura
-    │   │   ├── Header.jsx
-    │   │   └── Footer.jsx
-    │   │
-    │   ├── settings/                # Secciones de la landing page
-    │   │   ├── Hero.jsx
-    │   │   ├── Features.jsx
-    │   │   └── FAQ.jsx
-    │   │
-    │   └── ui/                      # Design system — componentes reutilizables
-    │       ├── Button.jsx
-    │       ├── Card.jsx
-    │       └── Input.jsx
-    │
-    ├── pages/
-    │   ├── public/
-    │   │   └── Home.jsx             # Landing page + showcase de componentes
-    │   │
-    │   └── admin/
-    │       ├── Login.jsx            # Formulario de acceso al panel
-    │       ├── Dashboard.jsx        # Vista general del panel
-    │       ├── ClienteDetalle.jsx   # Detalle de un cliente (/admin/clientes/:id)
-    │       ├── Clientes.jsx         # Lista de clientes registrados
-    │       ├── Trabajos.jsx         # Lista de todos los trabajos
-    │       ├── TrabajoDetalle.jsx   # Detalle de un trabajo (/admin/trabajos/:id)
-    │       └── Configuracion.jsx    # Configuración de precios por servicio
-    │
-    ├── routes/
-    │   └── AppRouter.jsx            # Definición de rutas con React Router DOM v6
-    │
-    ├── services/
-    │   └── api.js                   # Configuración de Axios (próxima fase)
-    │
-    └── utils/
-        └── formatters.js            # Utilidades de formato (próxima fase)
+├── assets/ # Logo e imágenes estáticas
+├── layouts/
+│ ├── PublicLayout.jsx # Marco del sitio público (Header + Outlet + Footer)
+│ └── AdminLayout.jsx # Marco del panel admin (Sidebar + Outlet)
+│
+├── components/
+│ ├── auth/
+│ │ └── ProtectedRoute.jsx # Guard de rutas protegidas (verifica JWT)
+│ │
+│ ├── layout/ # Componentes globales de estructura
+│ │ ├── Header.jsx
+│ │ └── Footer.jsx
+│ │
+│ ├── settings/ # Secciones de la landing page
+│ │ ├── Hero.jsx
+│ │ ├── Features.jsx
+│ │ ├── FAQ.jsx
+│ │ └── Form.jsx # Formulario de contacto (conectado a API)
+│ │
+│ └── ui/ # Design system — componentes reutilizables
+│ ├── Button.jsx
+│ ├── Card.jsx
+│ ├── Input.jsx
+│ ├── KpiCard.jsx # Tarjeta de indicador con estado de carga
+│ ├── Badge.jsx # Etiqueta de estado para tablas
+│ └── DataTable.jsx # Tabla genérica con carga, vacío y columnas configurables
+│
+├── pages/
+│ ├── public/
+│ │ └── Home.jsx # Landing page
+│ │
+│ └── admin/
+│ ├── Login.jsx # Formulario de acceso al panel
+│ ├── Dashboard.jsx # KPIs + tabla de trabajos en curso
+│ ├── GestionContactos.jsx # Leads y clientes (tabs, filtros, cambio de estado)
+│ ├── ClienteDetalle.jsx # Detalle de cliente con sus trabajos
+│ ├── Trabajos.jsx # Lista de todos los trabajos con filtros y cambio de estado
+│ ├── TrabajoDetalle.jsx # Detalle de trabajo, historial y edición de precio/estado
+│ └── Configuracion.jsx # Precios de referencia por servicio
+│
+├── routes/
+│ └── AppRouter.jsx # Definición de rutas con React Router DOM v6
+│
+├── services/
+│ └── api.js # Fetch wrapper con interceptor Bearer token
+│
+└── utils/
+└── formatters.js # Formatos de fecha, normalización de estados
+server/
+├── src/
+│ ├── config/
+│ │ └── db.js # Pool de conexiones MySQL (mysql2/promise)
+│ │
+│ ├── controllers/
+│ │ ├── authController.js # Login y generación de JWT
+│ │ ├── clientesController.js # CRUD de clientes
+│ │ ├── dashboardController.js # Estadísticas para el panel
+│ │ ├── leadsController.js # CRUD de leads y cambio de estado
+│ │ └── trabajosController.js # CRUD de trabajos, historial y estado
+│ │
+│ ├── middleware/
+│ │ ├── auth.js # Verificación de token JWT
+│ │ ├── rateLimit.js # Limitación de peticiones (placeholder)
+│ │ └── validaciones.js # Manejo de errores de express-validator
+│ │
+│ ├── models/
+│ │ └── LeadModel.js # Modelo de datos (si aplica)
+│ │
+│ └── routes/
+│ ├── authRoutes.js # POST /api/auth/login
+│ ├── clientesRoutes.js # GET/POST/PUT /api/clientes
+│ ├── dashboardRoutes.js # GET /api/dashboard/stats
+│ ├── leadsRoutes.js # GET/POST /api/leads, PUT estado
+│ └── trabajosRoutes.js # CRUD completo de trabajos + historial
+│
+├── .env.example # Variables de entorno de ejemplo
+├── database.sql # Script de creación de la base de datos
+├── index.js # Punto de entrada del servidor
+└── package.json
 ```
 
 ---
@@ -114,11 +152,36 @@ Props opcionales: `icon`, `subtitle`
 - Estado de `error` con mensaje en rojo
 - Tipos configurables: `text`, `email`, `tel`, `password`
 
+**KpiCard**
+- Indicador numérico con borde de color izquierdo
+- Estados: `loading` (esqueleto), normal
+- Props: `label`, `value`, `sub`, `color`, `loading`
+
+**Badge**
+- Etiqueta de estado con color de fondo y texto personalizables
+- Props: `estado`, `config` (mapa de colores)
+
+**DataTable**
+- Tabla genérica con columnas configurables
+- Maneja estados: `loading`, vacío (`emptyMessage`), datos
+- Soporta `render` por columna y `onRowClick`
+- Props: `columns`, `data`, `loading`, `emptyMessage`, `keyExtractor`, `onRowClick`
+
 ---
 
 ## Objetivos alcanzados en esta fase
 
-- ✅ Agregar rutas implementadas
+- ✅ Landing page con formulario de contacto funcional (POST /api/leads)
+- ✅ Autenticación completa (login JWT, ruta protegida, logout)
+- ✅ Dashboard con KPIs desde API y fallback local
+- ✅ Gestión de contactos con tabs Leads/Clientes y cambio de estado
+- ✅ CRUD visual de trabajos con filtros y cambio de estado
+- ✅ Detalle de trabajo con historial y edición de precio
+- ✅ Detalle de cliente con lista de trabajos asociados
+- ✅ Configuración de precios con edición inline
+- ✅ Componentes reutilizables: KpiCard, Badge, DataTable, Button, Input, Card
+- ✅ Conexión a todos los endpoints disponibles del backend
+- ✅ Protección de rutas del panel admin con verificación de token
 
 ---
 
@@ -128,9 +191,10 @@ Props opcionales: `icon`, `subtitle`
 |---|---|
 | React 18 | UI y componentes |
 | Vite 5 | Build tool y servidor de desarrollo |
-| Tailwind CSS 3 | Estilos y design system |
-| React Router DOM | Navegación entre rutas |
-| Axios | Consumo de API REST (próxima fase) |
+| Tailwind CSS 4 | Estilos y design system |
+| React Router DOM v6 | Navegación entre rutas |
+| Fetch API (nativo) | Consumo de API REST con interceptor Bearer |
+| PropTypes | Validación de tipos en componentes |
 
 ---
 
@@ -144,13 +208,7 @@ cd el-topo-porteno/client
 # 2. Instalar dependencias
 npm install
 
-# 3. Instalar Tailwind y PostCSS (si no están instalados)
-npm install -D tailwindcss postcss autoprefixer
-
-# 4. Instalar React Router DOM (si no está instalado)
-npm install react-router-dom
-
-# 5. Ejecutar en desarrollo
+# 3. Ejecutar en desarrollo
 npm run dev
 ```
 

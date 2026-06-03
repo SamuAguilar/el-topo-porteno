@@ -1,18 +1,16 @@
-import logo from "../../assets/logo.png";
-
 export default function Footer() {
   return (
-    <footer className="bg-[#0B0B0B] border-t border-[#1F2937] py-12 px-6">
+    <footer className="bg-brand-bg border-t border-brand-surface py-12 px-6">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10">
         {/* Logo y descripción */}
         <div>
           <div className="flex items-center gap-3 mb-4">
-            <img src={logo} alt="El Topo Porteño" className="h-10 w-10 object-contain" />
+            <img src="/assets/logo.png" alt="El Topo Porteño" className="h-10 w-10 object-contain" />
             <span className="text-white font-bold text-lg">
-              El Topo <span className="text-[#F59E0B]">Porteño</span>
+              El Topo <span className="text-brand-accent">Porteño</span>
             </span>
           </div>
-          <p className="text-[#6B7280] text-sm leading-relaxed">
+          <p className="text-brand-muted text-sm leading-relaxed">
             Servicios profesionales de excavación en Buenos Aires. Excavación,
             Zanjeo y Limpieza de Pozos.
           </p>
@@ -21,25 +19,25 @@ export default function Footer() {
         {/* Links */}
         <div>
           <h3 className="text-white font-semibold mb-4">Navegación</h3>
-          <ul className="space-y-2 text-[#6B7280] text-sm">
-            <li><a href="#inicio" className="hover:text-[#F59E0B] transition">Inicio</a></li>
-            <li><a href="#servicios" className="hover:text-[#F59E0B] transition">Servicios</a></li>
-            <li><a href="#nosotros" className="hover:text-[#F59E0B] transition">Preguntas frecuentes</a></li>
-            <li><a href="#contacto" className="hover:text-[#F59E0B] transition">Contacto</a></li>
+          <ul className="space-y-2 text-brand-muted text-sm">
+            <li><a href="#inicio" className="hover:text-brand-accent transition">Inicio</a></li>
+            <li><a href="#servicios" className="hover:text-brand-accent transition">Servicios</a></li>
+            <li><a href="#nosotros" className="hover:text-brand-accent transition">Preguntas frecuentes</a></li>
+            <li><a href="#contacto" className="hover:text-brand-accent transition">Contacto</a></li>
           </ul>
         </div>
 
         {/* Contacto */}
         <div id="contacto">
           <h3 className="text-white font-semibold mb-4">Contacto</h3>
-          <ul className="space-y-2 text-[#6B7280] text-sm">
+          <ul className="space-y-2 text-brand-muted text-sm">
             <li>📍 Buenos Aires, Argentina</li>
             <li>
               <a
                 href="https://wa.me/5491100000000"
                 target="_blank"
                 rel="noreferrer"
-                className="hover:text-[#F59E0B] transition"
+                className="hover:text-brand-accent transition"
               >
                 💬 WhatsApp
               </a>
@@ -49,7 +47,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto mt-10 pt-6 border-t border-[#1F2937] text-center text-[#6B7280] text-xs">
+      <div className="max-w-6xl mx-auto mt-10 pt-6 border-t border-brand-surface text-center text-brand-muted text-xs">
         © {new Date().getFullYear()} El Topo Porteño. Todos los derechos reservados.
       </div>
     </footer>

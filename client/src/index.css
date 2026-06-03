@@ -1,14 +1,12 @@
 @import "tailwindcss";
 
-/* Variables globales del design system */
-:root {
-  --color-bg:          #0B0B0B;
-  --color-bg-secondary:#1F2937;
-  --color-border:      #374151;
-  --color-muted:       #6B7280;
-  --color-accent:      #F59E0B;
-  --color-accent-dark: #D97706;
-  --color-white:       #FFFFFF;
+@theme {
+  --color-brand-bg: #0B0B0B;
+  --color-brand-surface: #1F2937;
+  --color-brand-border: #374151;
+  --color-brand-muted: #6B7280;
+  --color-brand-accent: #F59E0B;
+  --color-brand-accentDk: #D97706;
 }
 
 /* Reset base */
@@ -21,8 +19,8 @@ html {
 }
 
 body {
-  background-color: var(--color-bg);
-  color: var(--color-white);
+  background-color: var(--color-brand-bg);
+  color: white;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   margin: 0;
   padding: 0;

@@ -1,3 +1,4 @@
+// src/pages/public/Home.jsx
 import Hero from "../../components/settings/Hero";
 import Features from "../../components/settings/Features";
 import FAQ from "../../components/settings/FAQ";

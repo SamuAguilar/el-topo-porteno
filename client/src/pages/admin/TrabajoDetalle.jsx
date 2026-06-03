@@ -1,4 +1,3 @@
-// src/pages/admin/TrabajoDetalle.jsx
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiFetch } from "../../services/api";
@@ -28,8 +27,6 @@ export default function TrabajoDetalle() {
 
   const [editandoPrecio, setEditandoPrecio] = useState(false);
   const [nuevoPrecio, setNuevoPrecio] = useState("");
-
-  // Estados para el comentario al cambiar de estado
   const [comentarioCambio, setComentarioCambio] = useState("");
 
   useEffect(() => {
@@ -39,10 +36,7 @@ export default function TrabajoDetalle() {
       try {
         const resTrabajos = await apiFetch("/trabajos");
         const trabajosRaw = resTrabajos.data || [];
-        const trabajosNormalizados = trabajosRaw.map(t => ({
-          ...t,
-          estado: normalizarEstado(t.estado),
-        }));
+        const trabajosNormalizados = trabajosRaw.map(t => ({ ...t, estado: normalizarEstado(t.estado) }));
         const trabajoActual = trabajosNormalizados.find(t => t.id === parseInt(id));
 
         if (!trabajoActual) throw new Error("Trabajo no encontrado");
@@ -79,16 +73,10 @@ export default function TrabajoDetalle() {
     try {
       await apiFetch(`/trabajos/${id}/estado`, {
         method: "PUT",
-        body: {
-          estado_nuevo: estadoParaApi(nuevoEstado),
-          notas: comentarioCambio.trim() || null, // envía null si está vacío
-        },
+        body: { estado_nuevo: estadoParaApi(nuevoEstado), notas: comentarioCambio.trim() || null },
       });
-      // Limpiar comentario después de éxito
       setComentarioCambio("");
-      // Actualizar localmente
       setTrabajo(prev => ({ ...prev, estado: nuevoEstado }));
-      // Recargar historial
       const historialData = await apiFetch(`/trabajos/${id}/historial`);
       const historialNormalizado = Array.isArray(historialData)
         ? historialData.map(h => ({
@@ -110,12 +98,8 @@ export default function TrabajoDetalle() {
       alert("Ingresá un precio válido.");
       return;
     }
-
     try {
-      await apiFetch(`/trabajos/${id}`, {
-        method: "PUT",
-        body: { precio: precioNumerico },
-      });
+      await apiFetch(`/trabajos/${id}`, { method: "PUT", body: { precio: precioNumerico } });
       setTrabajo(prev => ({ ...prev, precio: precioNumerico }));
       setEditandoPrecio(false);
     } catch (err) {
@@ -133,18 +117,14 @@ export default function TrabajoDetalle() {
   ];
 
   if (loading) {
-    return (
-      <div style={{ color: "#6B7280", padding: "32px", textAlign: "center" }}>
-        Cargando trabajo...
-      </div>
-    );
+    return <div className="text-brand-muted p-8 text-center text-sm">Cargando trabajo...</div>;
   }
 
   if (error || !trabajo) {
     return (
-      <div style={{ color: "#6B7280", padding: "32px", textAlign: "center" }}>
+      <div className="text-brand-muted p-8 text-center">
         <p>{error || "Trabajo no encontrado."}</p>
-        <button onClick={() => navigate("/admin/trabajos")} style={{ color: "#F59E0B", background: "none", border: "none", cursor: "pointer", fontSize: "14px" }}>
+        <button onClick={() => navigate("/admin/trabajos")} className="text-brand-accent bg-transparent border-none cursor-pointer text-sm mt-2">
           ← Volver a Trabajos
         </button>
       </div>
@@ -152,150 +132,80 @@ export default function TrabajoDetalle() {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-      <button
-        onClick={() => navigate("/admin/trabajos")}
-        style={{ background: "none", border: "none", color: "#6B7280", cursor: "pointer", fontSize: "13px", padding: 0, width: "fit-content" }}
-      >
+    <div className="flex flex-col gap-6">
+      <button onClick={() => navigate("/admin/trabajos")} className="bg-transparent border-none text-brand-muted cursor-pointer text-sm w-fit">
         ← Volver a Trabajos
       </button>
 
       <div>
-        <h1 style={{ color: "#fff", fontSize: "22px", fontWeight: "bold", margin: 0 }}>
-          {trabajo.cliente_nombre} — {trabajo.tipo_servicio}
-        </h1>
-        <p style={{ color: "#6B7280", fontSize: "13px", marginTop: "4px" }}>
-          ID: {trabajo.id}
-        </p>
+        <h1 className="text-white text-xl font-bold m-0">{trabajo.cliente_nombre} — {trabajo.tipo_servicio}</h1>
+        <p className="text-brand-muted text-sm mt-1">ID: {trabajo.id}</p>
       </div>
 
       {/* Datos generales */}
-      <div style={{ background: "#1F2937", border: "1px solid #374151", borderRadius: "10px", padding: "20px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
+      <div className="bg-brand-surface border border-brand-border rounded-xl p-5 grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
         {[
-          { label: "Cliente",         value: trabajo.cliente_nombre },
-          { label: "Servicio",        value: trabajo.tipo_servicio },
-          { label: "Ubicación",       value: trabajo.ubicacion },
-          { label: "Profundidad",     value: trabajo.profundidad_estimada ? `${trabajo.profundidad_estimada}m` : "—" },
-          { label: "Fecha inicio",    value: formatDate(trabajo.fecha_inicio) },
-          { label: "Fecha fin",       value: formatDate(trabajo.fecha_fin) },
-        ].map(({ label, value }) => (
-          <div key={label} style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-            <span style={{ color: "#6B7280", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</span>
-            <span style={{ color: "#fff", fontSize: "14px" }}>{value}</span>
+          ["Cliente", trabajo.cliente_nombre],
+          ["Servicio", trabajo.tipo_servicio],
+          ["Ubicación", trabajo.ubicacion],
+          ["Profundidad", trabajo.profundidad_estimada ? `${trabajo.profundidad_estimada}m` : "—"],
+          ["Fecha inicio", formatDate(trabajo.fecha_inicio)],
+          ["Fecha fin", formatDate(trabajo.fecha_fin)],
+        ].map(([label, value]) => (
+          <div key={label} className="flex flex-col gap-1">
+            <span className="text-brand-muted text-xs uppercase tracking-wider">{label}</span>
+            <span className="text-white text-sm">{value}</span>
           </div>
         ))}
 
-        {/* Estado */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+        {/* Estado con comentario opcional */}
+        <div className="flex flex-col gap-1.5">
           <div>
-            <span style={{ color: "#6B7280", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Estado</span>
+            <span className="text-brand-muted text-xs uppercase tracking-wider">Estado</span>
             <select
               value={trabajo.estado}
               onChange={(e) => cambiarEstado(e.target.value)}
-              style={{
-                marginTop: "4px",
-                background: estadoConfig[trabajo.estado]?.bg ?? "#1a1a1a",
-                color: estadoConfig[trabajo.estado]?.text ?? "#fff",
-                border: "none", borderRadius: "999px",
-                fontSize: "12px", padding: "4px 10px",
-                cursor: "pointer", fontWeight: "500",
-                width: "fit-content",
-                display: "block",
-              }}
+              className="mt-1 text-xs px-2.5 py-0.5 rounded-full font-medium cursor-pointer border-none outline-none block w-fit"
+              style={{ backgroundColor: estadoConfig[trabajo.estado]?.bg ?? "#1a1a1a", color: estadoConfig[trabajo.estado]?.text ?? "#fff" }}
             >
-              {estadoOptions.map((op) => (
-                <option key={op} value={op}>{op}</option>
-              ))}
+              {estadoOptions.map((op) => <option key={op} value={op}>{op}</option>)}
             </select>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <span style={{ color: "#6B7280", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Comentario (opcional)</span>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-brand-muted text-xs uppercase tracking-wider">Comentario (opcional)</span>
             <input
               type="text"
               value={comentarioCambio}
               onChange={(e) => setComentarioCambio(e.target.value)}
               placeholder="Motivo del cambio..."
-              style={{
-                background: "#0B0B0B",
-                border: "1px solid #374151",
-                borderRadius: "6px",
-                padding: "6px 10px",
-                color: "#fff",
-                fontSize: "13px",
-                outline: "none",
-                width: "100%",
-                maxWidth: "220px",
-              }}
+              className="bg-brand-bg border border-brand-border rounded-md px-2.5 py-1.5 text-white text-sm outline-none w-full max-w-55"
             />
           </div>
         </div>
 
         {/* Precio editable */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-          <span style={{ color: "#6B7280", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Precio</span>
+        <div className="flex flex-col gap-1">
+          <span className="text-brand-muted text-xs uppercase tracking-wider">Precio</span>
           {editandoPrecio ? (
-            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-              <input
-                type="number"
-                value={nuevoPrecio}
-                onChange={(e) => setNuevoPrecio(e.target.value)}
-                style={{
-                  background: "#0B0B0B", border: "1px solid #374151",
-                  borderRadius: "6px", padding: "6px 10px", color: "#fff",
-                  fontSize: "14px", width: "120px", outline: "none",
-                }}
-              />
-              <button
-                onClick={guardarPrecio}
-                style={{
-                  background: "#F59E0B", color: "#000", border: "none",
-                  borderRadius: "6px", padding: "6px 14px", fontSize: "13px",
-                  fontWeight: "bold", cursor: "pointer",
-                }}
-              >
-                Guardar
-              </button>
-              <button
-                onClick={() => setEditandoPrecio(false)}
-                style={{
-                  background: "none", border: "1px solid #374151",
-                  borderRadius: "6px", color: "#6B7280", fontSize: "13px",
-                  padding: "6px 14px", cursor: "pointer",
-                }}
-              >
-                Cancelar
-              </button>
+            <div className="flex gap-2 items-center">
+              <input type="number" value={nuevoPrecio} onChange={(e) => setNuevoPrecio(e.target.value)}
+                className="bg-brand-bg border border-brand-border rounded-md px-2.5 py-1.5 text-white text-sm w-28 outline-none" />
+              <button onClick={guardarPrecio} className="bg-brand-accent text-black border-none rounded-md px-3.5 py-1.5 text-sm font-bold cursor-pointer">Guardar</button>
+              <button onClick={() => setEditandoPrecio(false)} className="bg-transparent border border-brand-border rounded-md text-brand-muted text-sm px-3.5 py-1.5 cursor-pointer">Cancelar</button>
             </div>
           ) : (
-            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-              <span style={{ color: "#F59E0B", fontSize: "16px", fontWeight: "bold" }}>
+            <div className="flex gap-2 items-center">
+              <span className="text-brand-accent text-base font-bold">
                 {trabajo.precio != null ? `$${Number(trabajo.precio).toLocaleString("es-AR")}` : "—"}
               </span>
-              <button
-                onClick={() => {
-                  setNuevoPrecio(trabajo.precio ?? "");
-                  setEditandoPrecio(true);
-                }}
-                style={{
-                  background: "none", border: "1px solid #374151",
-                  borderRadius: "6px", color: "#6B7280", fontSize: "12px",
-                  padding: "4px 10px", cursor: "pointer",
-                }}
-              >
-                Editar
-              </button>
+              <button onClick={() => { setNuevoPrecio(trabajo.precio ?? ""); setEditandoPrecio(true); }}
+                className="bg-transparent border border-brand-border rounded-md text-brand-muted text-xs px-2.5 py-1 cursor-pointer">Editar</button>
             </div>
           )}
         </div>
       </div>
 
-      {/* Historial */}
-      <DataTable
-        columns={columnasHistorial}
-        data={historial}
-        emptyMessage="Sin movimientos registrados."
-        keyExtractor={(h) => h.id}
-      />
+      <DataTable columns={columnasHistorial} data={historial} emptyMessage="Sin movimientos registrados." keyExtractor={(h) => h.id} />
     </div>
   );
 }

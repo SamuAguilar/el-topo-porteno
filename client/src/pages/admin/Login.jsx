@@ -1,7 +1,5 @@
-// src/pages/admin/Login.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import logo from "../../assets/logo.png";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 import { apiFetch } from "../../services/api";
@@ -43,46 +41,25 @@ export default function Login() {
   }
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "#0B0B0B",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "24px",
-    }}>
-      <div style={{
-        background: "#1F2937",
-        border: "1px solid #374151",
-        borderRadius: "12px",
-        padding: "40px",
-        width: "100%",
-        maxWidth: "400px",
-      }}>
+    <div className="min-h-screen bg-brand-bg flex items-center justify-center p-6">
+      <div className="bg-brand-surface border border-brand-border rounded-xl p-10 w-full max-w-sm">
         {/* Logo */}
-        <div style={{ textAlign: "center", marginBottom: "32px" }}>
+        <div className="text-center mb-8">
           <img
-            src={logo}
+            src="/assets/logo.png"
             alt="El Topo Porteño"
-            style={{
-              height: "64px",
-              objectFit: "contain",
-              marginBottom: "12px",
-              display: "block",
-              marginLeft: "auto",
-              marginRight: "auto",
-            }}
+            className="h-16 object-contain mb-3 mx-auto block"
           />
-          <h1 style={{ color: "#fff", fontSize: "20px", fontWeight: "bold", margin: 0 }}>
-            El Topo <span style={{ color: "#F59E0B" }}>Porteño</span>
+          <h1 className="text-white text-xl font-bold m-0">
+            El Topo <span className="text-brand-accent">Porteño</span>
           </h1>
-          <p style={{ color: "#6B7280", fontSize: "13px", marginTop: "4px" }}>
+          <p className="text-brand-muted text-sm mt-1">
             Panel Administrativo
           </p>
         </div>
 
         {/* Formulario */}
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <Input
             label="Usuario"
             type="text"
@@ -90,7 +67,7 @@ export default function Login() {
             value={form.username}
             onChange={handleChange}
             placeholder="Tu nombre de usuario"
-            error={error ? " " : undefined} // Solo mostramos borde rojo, el mensaje general va abajo
+            error={error ? " " : undefined}   // solo borde rojo, sin mensaje
           />
 
           <Input
@@ -104,12 +81,12 @@ export default function Login() {
           />
 
           {error && (
-            <p style={{ color: "#EF4444", fontSize: "13px", margin: 0 }}>
+            <p className="text-red-500 text-sm m-0">
               {error}
             </p>
           )}
 
-          <Button type="submit" variant="primary" size="md" style={{ marginTop: "8px" }}>
+          <Button type="submit" variant="primary" size="md" className="mt-2">
             Ingresar
           </Button>
         </form>
