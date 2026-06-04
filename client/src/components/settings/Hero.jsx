@@ -15,9 +15,6 @@ export default function Hero() {
         }}
       />
       <div className="relative z-20 max-w-4xl mx-auto px-6 py-20">
-        <span className="inline-block bg-brand-accent/20 text-brand-accent text-sm font-semibold px-4 py-1 rounded-full mb-6 border border-brand-accent/30">
-          Buenos Aires · Argentina
-        </span>
         <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight">
           Soluciones de{" "}
           <span className="text-brand-accent">Excavación</span>{" "}
