@@ -23,3 +23,10 @@ pool.getConnection()
     });
 
 module.exports = pool;
+
+console.log('Valores de conexión:', {
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD ? '****' : '(vacía)',
+  database: process.env.DB_NAME
+});

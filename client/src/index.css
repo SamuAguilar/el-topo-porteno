@@ -1,3 +1,27 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-brand-bg: #0B0B0B;
+  --color-brand-surface: #1F2937;
+  --color-brand-border: #374151;
+  --color-brand-muted: #6B7280;
+  --color-brand-accent: #F59E0B;
+  --color-brand-accentDk: #D97706;
+}
+
+/* Reset base */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-brand-bg);
+  color: white;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 0;
+}
