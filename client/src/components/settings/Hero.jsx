@@ -25,19 +25,25 @@ export default function Hero() {
           eficientes de Excavación, Zanjeo y Limpieza de Pozos en toda la región.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button
-            variant="primary"
-            size="lg"
-            onClick={() => {
-              const el = document.getElementById("contacto");
-              if (el) {
-                const y = el.getBoundingClientRect().top + window.pageYOffset - 10;
-                window.scrollTo({ top: y, behavior: "smooth" });
-              }
-            }}
-          >
-            Solicitar Cotización
-          </Button>
+          {/* Se agregó cursor-pointer aquí */}
+          <div className="hover:scale-105 transition-transform duration-300 cursor-pointer">
+            <Button
+              variant="primary"
+              size="lg"
+              
+              className="cursor-pointer"
+              onClick={() => {
+                const el = document.getElementById("contacto");
+                if (el) {
+                  
+                  const y = el.getBoundingClientRect().top + window.pageYOffset - 10;
+                  window.scrollTo({ top: y, behavior: "smooth" });
+                }
+              }}
+            >
+              Solicitar Cotización
+            </Button>
+          </div>
         </div>
       </div>
     </section>

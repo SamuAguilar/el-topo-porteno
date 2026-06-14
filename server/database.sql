@@ -16,7 +16,7 @@ CREATE TABLE leads (
     nombre VARCHAR(100) NOT NULL,
     whatsapp VARCHAR(20) NOT NULL,
     email VARCHAR(100) NOT NULL,
-    servicio ENUM('Excavacion', 'Sanjeo', 'Limpieza') NOT NULL,
+    servicio ENUM('Excavacion', 'Zanjeo', 'Limpieza') NOT NULL,
     descripcion TEXT NOT NULL,
     estado ENUM('Nuevo', 'Contactado', 'Cerrado exitoso', 'Cerrado no concretado') NOT NULL DEFAULT 'Nuevo',
     fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -37,7 +37,7 @@ CREATE TABLE clientes (
 CREATE TABLE trabajos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     cliente_id INT NOT NULL,
-    tipo_servicio ENUM('Excavacion', 'Sanjeo', 'Limpieza') NOT NULL,
+    tipo_servicio ENUM('Excavacion', 'Zanjeo', 'Limpieza') NOT NULL,
     ubicacion VARCHAR(200) NOT NULL,
     profundidad_estimada DECIMAL(6,2) NULL,
     estado ENUM('Presupuestado', 'Aceptado', 'En ejecucion', 'Finalizado', 'En garantia', 'Cerrado') NOT NULL DEFAULT 'Presupuestado',

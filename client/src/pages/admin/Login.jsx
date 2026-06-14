@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
@@ -8,6 +8,47 @@ export default function Login() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
+  
+  const [bloqueado, setBloqueado] = useState(false);
+  const [tiempoRestante, setTiempoRestante] = useState(0);
+
+  // Al cargar la pantalla, revisamos si hay un bloqueo guardado
+  useEffect(() => {
+    const tiempoDesbloqueo = localStorage.getItem("bloqueo_login_hasta");
+    
+    if (tiempoDesbloqueo) {
+      const msRestantes = parseInt(tiempoDesbloqueo) - Date.now();
+      
+      if (msRestantes > 0) {
+        setBloqueado(true);
+        setTiempoRestante(Math.ceil(msRestantes / 1000));
+        setError("Demasiados intentos fallidos. Intente más tarde.");
+      } else {
+        localStorage.removeItem("bloqueo_login_hasta");
+      }
+    }
+  }, []);
+
+  // Temporizador regresivo
+  useEffect(() => {
+    let intervalo;
+    if (bloqueado && tiempoRestante > 0) {
+      intervalo = setInterval(() => {
+        setTiempoRestante((prev) => prev - 1);
+      }, 1000);
+    } else if (tiempoRestante <= 0 && bloqueado) {
+      setBloqueado(false);
+      setError("");
+      localStorage.removeItem("bloqueo_login_hasta"); // Limpiamos la memoria al terminar
+    }
+    return () => clearInterval(intervalo);
+  }, [bloqueado, tiempoRestante]);
+
+  const formatearTiempo = (segundos) => {
+    const m = Math.floor(segundos / 60).toString().padStart(2, "0");
+    const s = (segundos % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  };
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -16,6 +57,9 @@ export default function Login() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    
+    if (bloqueado) return;
+
     if (!form.username || !form.password) {
       setError("Completá todos los campos.");
       return;
@@ -30,12 +74,20 @@ export default function Login() {
       localStorage.setItem("token", data.token);
       navigate("/admin/dashboard");
     } catch (err) {
-      if (err.errores) {
+      if (err.status === 429 || (err.message && err.message.includes("429"))) {
+        setBloqueado(true);
+        setTiempoRestante(600); // 10 minutos
+        // Guardamos en memoria el timestamp futuro (ahora + 10 minutos)
+        localStorage.setItem("bloqueo_login_hasta", Date.now() + 600 * 1000);
+        setError("Demasiados intentos fallidos. Intente más tarde.");
+      } else if (err.status === 401 || (err.message && err.message.includes("401"))) {
+        setError("Usuario o contraseña incorrectos.");
+      } else if (err.errores) {
         setError(err.errores.map((e) => e.mensaje).join(", "));
       } else if (err.message) {
         setError(err.message);
       } else {
-        setError("Error de conexión");
+        setError("Error de conexión con el servidor.");
       }
     }
   }
@@ -67,7 +119,8 @@ export default function Login() {
             value={form.username}
             onChange={handleChange}
             placeholder="Tu nombre de usuario"
-            error={error ? " " : undefined}   // solo borde rojo, sin mensaje
+            error={error ? " " : undefined}
+            disabled={bloqueado}
           />
 
           <Input
@@ -78,6 +131,7 @@ export default function Login() {
             onChange={handleChange}
             placeholder="Tu contraseña"
             error={error ? " " : undefined}
+            disabled={bloqueado}
           />
 
           {error && (
@@ -86,8 +140,14 @@ export default function Login() {
             </p>
           )}
 
-          <Button type="submit" variant="primary" size="md" className="mt-2">
-            Ingresar
+          <Button 
+            type="submit" 
+            variant="primary" 
+            size="md" 
+            className="mt-2"
+            disabled={bloqueado}
+          >
+            {bloqueado ? `Bloqueado (${formatearTiempo(tiempoRestante)})` : "Ingresar"}
           </Button>
         </form>
       </div>

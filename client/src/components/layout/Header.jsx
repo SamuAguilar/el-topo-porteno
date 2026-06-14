@@ -1,30 +1,67 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [seccionActiva, setSeccionActiva] = useState("inicio");
+  const isScrolling = useRef(false);
+
+  // detecta la sección visible al scrollear
+  useEffect(() => {
+    const handleScroll = () => {
+      if (isScrolling.current) return;
+
+      const secciones = ["inicio", "servicios", "faq", "contacto"];
+      let actual = "inicio";
+
+      for (const seccion of secciones) {
+        const elemento = document.getElementById(seccion);
+        if (elemento) {
+          const rect = elemento.getBoundingClientRect();
+          if (rect.top <= 150) {
+            actual = seccion;
+          }
+        }
+      }
+      setSeccionActiva(actual);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const scrollTo = (id) => {
+    isScrolling.current = true;
+    setSeccionActiva(id);
+    
     const el = document.getElementById(id);
     if (el) {
       const y = el.getBoundingClientRect().top + window.pageYOffset - 10;
       window.scrollTo({ top: y, behavior: "smooth" });
     }
     setMenuOpen(false);
+
+    // reactiva la detección al terminar la animación
+    setTimeout(() => {
+      isScrolling.current = false;
+    }, 800);
   };
 
   return (
     <header className="sticky top-0 z-50 bg-brand-bg border-b border-brand-border">
       <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-        {/* Logo */}
-        <div className="flex items-center gap-3">
+        
+        {/* Logo con redirección al inicio */}
+        <div 
+          className="flex items-center gap-3 cursor-pointer"
+          onClick={() => scrollTo("inicio")}
+        >
           <img
             src="/assets/logo.png"
             alt="El Topo Porteño"
-            className="h-24 w-24 object-contain"
+            className="h-14 w-auto object-contain" 
           />
-          <span className="text-white font-bold text-lg leading-tight">
-            El Topo<br />
-            <span className="text-brand-accent">Porteño</span>
+          <span className="text-white font-bold text-xl tracking-wide">
+            El Topo <span className="text-brand-accent">Porteño</span>
           </span>
         </div>
 
@@ -39,7 +76,11 @@ export default function Header() {
             <button
               key={target}
               onClick={() => scrollTo(target)}
-              className="text-white hover:text-brand-accent transition font-medium bg-transparent border-none cursor-pointer"
+              className={`transition font-medium bg-transparent border-none cursor-pointer ${
+                seccionActiva === target 
+                  ? "text-brand-accent" 
+                  : "text-white hover:text-brand-accent"
+              }`}
             >
               {label}
             </button>
@@ -72,7 +113,11 @@ export default function Header() {
             <button
               key={target}
               onClick={() => scrollTo(target)}
-              className="text-white hover:text-brand-accent transition bg-transparent border-none cursor-pointer text-left"
+              className={`transition bg-transparent border-none cursor-pointer text-left ${
+                seccionActiva === target 
+                  ? "text-brand-accent" 
+                  : "text-white hover:text-brand-accent"
+              }`}
             >
               {target.charAt(0).toUpperCase() + target.slice(1)}
             </button>

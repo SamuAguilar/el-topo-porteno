@@ -15,14 +15,14 @@ export const chatTree = {
     opciones: [
       { texto: "Excavación — Pozo séptico", next: "contacto", valor: "Excavacion" },
       { texto: "Excavación — Pozo de agua", next: "contacto", valor: "Excavacion" },
-      { texto: "Sanjeo", next: "contacto", valor: "Sanjeo" },
+      { texto: "Zanjeo", next: "contacto", valor: "Zanjeo" },
       { texto: "Limpieza de pozos", next: "contacto", valor: "Limpieza" },
       { texto: "Volver al inicio", next: "inicio" },
     ],
   },
   
   info_servicios: {
-    mensaje: "Estos son nuestros servicios principales:\n\n🏗️ Excavación: Pozos sépticos y de agua\n⚙️ Sanjeo: Zanjeo técnico para gas y cañerías\n💧 Limpieza: Mantenimiento de pozos ciegos\n\nTrabajamos en CABA y GBA. ¿Qué querés hacer ahora?",
+    mensaje: "Estos son nuestros servicios principales:\n\n🏗️ Excavación: Pozos sépticos y de agua\n⚙️ Zanjeo: Zanjeo técnico para gas y cañerías\n💧 Limpieza: Mantenimiento de pozos ciegos\n\nTrabajamos en CABA y GBA. ¿Qué querés hacer ahora?",
     opciones: [
       { texto: "Solicitar un presupuesto", next: "servicio" },
       { texto: "Volver al inicio", next: "inicio" },

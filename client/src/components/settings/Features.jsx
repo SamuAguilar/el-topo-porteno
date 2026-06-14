@@ -6,7 +6,7 @@ export default function Features() {
       icono: "🏗️",
     },
     {
-      titulo: "Sanjeo",
+      titulo: "Zanjeo",
       descripcion: "Zanjeo técnico para instalaciones de gas y cañerías.",
       icono: "⚙️",
     },
@@ -30,7 +30,7 @@ export default function Features() {
           {servicios.map((s) => (
             <div
               key={s.titulo}
-              className="bg-brand-surface border border-brand-border rounded-xl p-8 text-center hover:border-brand-accent transition"
+              className="bg-brand-surface border border-brand-border rounded-xl p-8 text-center transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-brand-accent/10 hover:border-brand-accent"
             >
               <div className="text-4xl mb-4">{s.icono}</div>
               <h3 className="text-white text-lg font-bold mb-2">{s.titulo}</h3>

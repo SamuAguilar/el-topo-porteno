@@ -4,7 +4,7 @@ import { apiFetch } from "../../services/api";
 const servicios = [
   { label: "Excavación — Pozo séptico", value: "Excavacion" },
   { label: "Excavación — Pozo de agua", value: "Excavacion" },
-  { label: "Sanjeo", value: "Sanjeo" },
+  { label: "Zanjeo", value: "Zanjeo" },
   { label: "Limpieza de pozos", value: "Limpieza" },
 ];
 
@@ -72,7 +72,7 @@ export default function Form() {
             </p>
             <button
               onClick={() => setEnviado(false)}
-              className="border border-brand-border text-brand-muted rounded-lg px-6 py-2 text-sm hover:border-brand-accent hover:text-brand-accent transition"
+              className="border border-brand-border text-brand-muted rounded-lg px-6 py-2 text-sm hover:border-brand-accent hover:text-brand-accent transition cursor-pointer"
             >
               Enviar otra consulta
             </button>
@@ -97,7 +97,7 @@ export default function Form() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-brand-bg border border-brand-border rounded-xl p-8 flex flex-col gap-5">
+        <form onSubmit={handleSubmit} className="bg-brand-bg border border-brand-border rounded-xl p-8 flex flex-col gap-5 focus-within:shadow-2xl focus-within:shadow-brand-accent/5 transition-shadow duration-500">
           {/* Nombre */}
           <div className="flex flex-col gap-1.5">
             <label className="text-white text-sm font-medium">Nombre completo</label>
@@ -181,10 +181,10 @@ export default function Form() {
             {errors.descripcion && <p className="text-red-400 text-xs">{errors.descripcion}</p>}
           </div>
 
-          {/* Botón */}
+          {/* Botón con cursor-pointer */}
           <button
             type="submit"
-            className="bg-brand-accent hover:bg-brand-accentDk text-black font-bold text-base rounded-lg py-3 transition mt-1"
+            className="bg-brand-accent hover:bg-brand-accentDk text-black font-bold text-base rounded-lg py-3 transition mt-1 cursor-pointer"
           >
             Enviar consulta
           </button>

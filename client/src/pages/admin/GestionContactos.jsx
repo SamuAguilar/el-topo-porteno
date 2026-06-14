@@ -32,7 +32,6 @@ export default function GestionContactos() {
   const [filtroEstado, setFiltroEstado] = useState("Todos");
 
   const [leads, setLeads] = useState([]);
-  const [clientes, setClientes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -41,14 +40,11 @@ export default function GestionContactos() {
 
     async function fetchContactos() {
       try {
-        const [leadsData, clientesData] = await Promise.all([
-          apiFetch("/leads"),
-          apiFetch("/clientes"),
-        ]);
+        // Ahora solo traemos la data unificada desde leads
+        const leadsData = await apiFetch("/leads");
 
         if (!cancelado) {
           setLeads(Array.isArray(leadsData) ? leadsData : []);
-          setClientes(Array.isArray(clientesData) ? clientesData : []);
           setError("");
         }
       } catch (err) {
@@ -65,23 +61,12 @@ export default function GestionContactos() {
     return () => { cancelado = true; };
   }, []);
 
-  const leadMap = new Map(leads.map((l) => [l.id, l]));
-
-  const clientesEnriquecidos = clientes.map((c) => {
-    const lead = leadMap.get(c.lead_id);
-    return {
-      ...c,
-      tipo: "cliente",
-      servicio: c.servicio ?? (lead ? lead.servicio : undefined),
-      descripcion: c.descripcion ?? (lead ? lead.descripcion : undefined),
-      estado: c.estado ?? (lead ? lead.estado : undefined),
-    };
-  });
-
-  const todos = [
-    ...leads.map((l) => ({ ...l, tipo: "lead" })),
-    ...clientesEnriquecidos,
-  ];
+  // Mapeamos la data pura a "todos", asignándole el tipo en base a MySQL o su estado
+  const todos = leads.map((l) => ({
+    ...l,
+    // Si la DB dice es_cliente (1 o true) o el estado ya es Cerrado exitoso, lo mostramos como Cliente
+    tipo: (l.es_cliente === 1 || l.es_cliente === true || l.estado === "Cerrado exitoso") ? "cliente" : "lead"
+  }));
 
   const filtrados = todos.filter((item) => {
     const matchTab =
@@ -113,7 +98,7 @@ export default function GestionContactos() {
       label: "Nombre",
       render: (c) => (
         <div>
-          <div className="text-white text-sm">{c.nombre}</div>
+          <div className="text-white text-sm whitespace-nowrap">{c.nombre}</div>
           <Badge estado={c.tipo} config={tipoConfig} className="mt-1" />
         </div>
       ),
@@ -126,7 +111,7 @@ export default function GestionContactos() {
           href={`https://wa.me/${c.whatsapp}`}
           target="_blank"
           rel="noreferrer"
-          className="text-emerald-500 text-sm no-underline"
+          className="text-emerald-500 text-sm no-underline whitespace-nowrap"
         >
           {c.whatsapp}
         </a>
@@ -136,47 +121,43 @@ export default function GestionContactos() {
       key: "servicio",
       label: "Servicio",
       render: (c) => c.servicio ?? "—",
-      cellStyle: { color: "#6B7280", fontSize: "13px" },
+      cellStyle: { color: "#6B7280", fontSize: "13px", minWidth: "120px" },
     },
     {
       key: "descripcion",
       label: "Descripción",
       render: (c) => (
-        <span className="line-clamp-2 text-brand-muted text-sm">
+        <span className="line-clamp-2 text-brand-muted text-sm min-w-37.5">
           {c.descripcion ?? "—"}
         </span>
       ),
-      cellStyle: { maxWidth: "200px" },
     },
     {
       key: "estado",
       label: "Estado",
-      render: (c) =>
-        c.tipo === "lead" ? (
-          <select
-            value={c.estado}
-            onChange={(e) => cambiarEstadoLead(c.id, e.target.value)}
-            className="text-xs px-2.5 py-0.5 rounded-full font-medium cursor-pointer border-none outline-none"
-            style={{
-              backgroundColor: estadoConfig[c.estado]?.bg ?? "#1a1a1a",
-              color: estadoConfig[c.estado]?.text ?? "#fff",
-            }}
-          >
-            {estadoOptions.map((op) => (
-              <option key={op} value={op}>
-                {op}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <Badge estado={c.estado} config={estadoConfig} />
-        ),
+      render: (c) => (
+        <select
+          value={c.estado}
+          onChange={(e) => cambiarEstadoLead(c.id, e.target.value)}
+          className="text-xs px-2.5 py-0.5 rounded-full font-medium cursor-pointer border-none outline-none whitespace-nowrap"
+          style={{
+            backgroundColor: estadoConfig[c.estado]?.bg ?? "#1a1a1a",
+            color: estadoConfig[c.estado]?.text ?? "#fff",
+          }}
+        >
+          {estadoOptions.map((op) => (
+            <option key={op} value={op}>
+              {op}
+            </option>
+          ))}
+        </select>
+      )
     },
     {
       key: "fecha",
       label: "Fecha",
       render: (c) => formatDate(c.fecha_creacion ?? c.fecha_alta ?? c.fecha),
-      cellStyle: { color: "#6B7280", fontSize: "13px" },
+      cellStyle: { color: "#6B7280", fontSize: "13px", minWidth: "100px" },
     },
     {
       key: "email",
@@ -204,7 +185,7 @@ export default function GestionContactos() {
       {/* Encabezado */}
       <div>
         <h1 className="text-white text-xl font-bold m-0">Gestión de Contactos</h1>
-        <p className="text-brand-muted text-sm mt-1">Leads y clientes registrados</p>
+        <p className="text-brand-muted text-sm mt-1">Leads y clientes unificados</p>
       </div>
 
       {/* Error */}
@@ -214,14 +195,14 @@ export default function GestionContactos() {
         </div>
       )}
 
-      {/* Tabs + Filtro */}
-      <div className="flex justify-between items-center flex-wrap gap-3">
-        <div className="flex gap-1 bg-brand-surface rounded-lg p-1">
+      {/* Tabs + Filtro (Responsivo con flex-wrap) */}
+      <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-4">
+        <div className="flex flex-wrap gap-1 bg-brand-surface rounded-lg p-1 w-full sm:w-auto">
           {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setTabActiva(tab)}
-              className={`border-none rounded-md text-sm px-4 py-1.5 transition cursor-pointer ${
+              className={`flex-1 sm:flex-none border-none rounded-md text-sm px-4 py-1.5 transition cursor-pointer ${
                 tabActiva === tab
                   ? "bg-brand-border text-white font-semibold"
                   : "bg-transparent text-brand-muted"
@@ -235,7 +216,7 @@ export default function GestionContactos() {
         <select
           value={filtroEstado}
           onChange={(e) => setFiltroEstado(e.target.value)}
-          className="bg-brand-surface border border-brand-border rounded-md text-white text-sm px-3 py-1.5 cursor-pointer"
+          className="bg-brand-surface border border-brand-border rounded-md text-white text-sm px-3 py-1.5 cursor-pointer w-full sm:w-auto"
         >
           <option value="Todos">Todos los estados</option>
           {estadoOptions.map((e) => (
@@ -246,14 +227,18 @@ export default function GestionContactos() {
         </select>
       </div>
 
-      {/* Tabla */}
-      <DataTable
-        columns={columnas}
-        data={filtrados}
-        loading={loading}
-        emptyMessage="No hay contactos que coincidan con los filtros."
-        keyExtractor={(item) => `${item.tipo}-${item.id}`}
-      />
+      {/* Tabla con scroll horizontal (overflow-x-auto) para celulares */}
+      <div className="w-full overflow-x-auto pb-4">
+        <div className="min-w-200">
+          <DataTable
+            columns={columnas}
+            data={filtrados}
+            loading={loading}
+            emptyMessage="No hay contactos que coincidan con los filtros."
+            keyExtractor={(item) => `${item.tipo}-${item.id}`}
+          />
+        </div>
+      </div>
     </div>
   );
 }

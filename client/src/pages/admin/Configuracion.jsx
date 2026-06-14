@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "../../services/api";
 import DataTable from "../../components/ui/DataTable";
 
-const serviciosMock = ["Excavación — Pozo séptico", "Excavación — Pozo de agua", "Sanjeo", "Limpieza de pozos"];
-const preciosMock = { "Excavación — Pozo séptico": 85000, "Excavación — Pozo de agua": 95000, "Sanjeo": 60000, "Limpieza de pozos": 35000 };
+const serviciosMock = ["Excavación — Pozo séptico", "Excavación — Pozo de agua", "Zanjeo", "Limpieza de pozos"];
+const preciosMock = { "Excavación — Pozo séptico": 85000, "Excavación — Pozo de agua": 95000, "Zanjeo": 60000, "Limpieza de pozos": 35000 };
 
 export default function Configuracion() {
   const [servicios, setServicios] = useState(serviciosMock);

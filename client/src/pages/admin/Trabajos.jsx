@@ -15,7 +15,7 @@ const estadoConfig = {
 };
 
 const estadoOptions = ["Presupuestado", "Aceptado", "En ejecución", "Finalizado", "En garantía", "Cerrado"];
-const servicioOptions = ["Todos", "Excavacion", "Sanjeo", "Limpieza"];
+const servicioOptions = ["Todos", "Excavacion", "Zanjeo", "Limpieza"];
 
 export default function Trabajos() {
   const navigate = useNavigate();
@@ -98,7 +98,19 @@ export default function Trabajos() {
           {servicioOptions.filter(op => op !== "Todos").map(op => <option key={op} value={op}>{op}</option>)}
         </select>
       </div>
-      <DataTable columns={columnas} data={filtrados} loading={loading} emptyMessage="No hay trabajos que coincidan con los filtros." keyExtractor={(item) => item.id} />
+      
+      {/* Contenedor responsivo para móviles */}
+      <div className="w-full overflow-x-auto pb-4">
+        <div className="min-w-225">
+          <DataTable 
+            columns={columnas} 
+            data={filtrados} 
+            loading={loading} 
+            emptyMessage="No hay trabajos que coincidan con los filtros." 
+            keyExtractor={(item) => item.id} 
+          />
+        </div>
+      </div>
     </div>
   );
 }
