@@ -14,7 +14,6 @@ import GestionContactos from "../pages/admin/GestionContactos";
 import ClienteDetalle from "../pages/admin/ClienteDetalle";
 import Trabajos from "../pages/admin/Trabajos";
 import TrabajoDetalle from "../pages/admin/TrabajoDetalle";
-import Configuracion from "../pages/admin/Configuracion";
 
 // Protección de rutas
 import ProtectedRoute from "../components/auth/ProtectedRoute";
@@ -50,7 +49,6 @@ const router = createBrowserRouter([
       { path: "clientes/:id", element: <ClienteDetalle /> },
       { path: "trabajos", element: <Trabajos /> },
       { path: "trabajos/:id", element: <TrabajoDetalle /> },
-      { path: "configuracion", element: <Configuracion /> },
     ],
   },
 ]);

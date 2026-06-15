@@ -5,7 +5,6 @@ const navItems = [
   { to: "/admin/dashboard",         label: "Dashboard" },
   { to: "/admin/gestion-contactos", label: "Contactos" },
   { to: "/admin/trabajos",          label: "Trabajos" },
-  { to: "/admin/configuracion",     label: "Configuración" },
 ];
 
 export default function AdminLayout() {
