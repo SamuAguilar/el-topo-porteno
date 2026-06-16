@@ -2,8 +2,8 @@
 
 Plataforma web desarrollada para **El Topo Porteño**, empresa de servicios de excavación de pozos en Buenos Aires, Argentina.
 
-**Materias:** Taller de Desarollo de Aplicaciones & Programación de Aplicaciones Web III
-**Alumnos (Taller de Desarollo de Aplicaciones):** Aguilar, Samuel Ezequiel - Zanetta, Augusto
+**Materias:** Taller de Desarrollo de Aplicaciones & Programación de Aplicaciones Web III  
+**Alumnos (Taller de Desarrollo de Aplicaciones):** Aguilar, Samuel Ezequiel - Zanetta, Augusto  
 **Alumno (Programación de Aplicaciones Web III):** Zanetta, Augusto
 
 ---
@@ -22,7 +22,7 @@ La empresa gestionaba sus presupuestos y consultas de forma completamente manual
 
 ---
 
-## Arquitectura y estructura de carpetas Frontend
+## Arquitectura y estructura de carpetas
 
 ```
 client/
@@ -31,21 +31,18 @@ client/
 ├── layouts/
 │ ├── PublicLayout.jsx # Marco del sitio público (Header + Outlet + Footer)
 │ └── AdminLayout.jsx # Marco del panel admin (Sidebar + Outlet)
-│
 ├── components/
 │ ├── auth/
 │ │ └── ProtectedRoute.jsx # Guard de rutas protegidas (verifica JWT)
-│ │
 │ ├── layout/ # Componentes globales de estructura
 │ │ ├── Header.jsx
 │ │ └── Footer.jsx
-│ │
 │ ├── settings/ # Secciones de la landing page
 │ │ ├── Hero.jsx
 │ │ ├── Features.jsx
 │ │ ├── FAQ.jsx
-│ │ └── Form.jsx # Formulario de contacto (conectado a API)
-│ │
+│ │ ├── Form.jsx # Formulario de contacto (conectado a API)
+│ │ └── Chatbot.jsx # Chatbot interactivo con árbol de decisión
 │ └── ui/ # Design system — componentes reutilizables
 │ ├── Button.jsx
 │ ├── Card.jsx
@@ -53,56 +50,46 @@ client/
 │ ├── KpiCard.jsx # Tarjeta de indicador con estado de carga
 │ ├── Badge.jsx # Etiqueta de estado para tablas
 │ └── DataTable.jsx # Tabla genérica con carga, vacío y columnas configurables
-│
 ├── pages/
 │ ├── public/
 │ │ └── Home.jsx # Landing page
-│ │
 │ └── admin/
 │ ├── Login.jsx # Formulario de acceso al panel
 │ ├── Dashboard.jsx # KPIs + tabla de trabajos en curso
-│ ├── GestionContactos.jsx # Leads y clientes (tabs, filtros, cambio de estado)
-│ ├── ClienteDetalle.jsx # Detalle de cliente con sus trabajos
+│ ├── GestionContactos.jsx # Leads y clientes unificados (tabs, filtros, cambio de estado)
+│ ├── ClienteDetalle.jsx # Detalle de cliente con sus trabajos (y creación de nuevo trabajo)
 │ ├── Trabajos.jsx # Lista de todos los trabajos con filtros y cambio de estado
-│ ├── TrabajoDetalle.jsx # Detalle de trabajo, historial y edición de precio/estado
-│ └── Configuracion.jsx # Precios de referencia por servicio
-│
+│ └── TrabajoDetalle.jsx # Detalle de trabajo, historial, edición de precio/estado y observaciones
 ├── routes/
 │ └── AppRouter.jsx # Definición de rutas con React Router DOM v6
-│
 ├── services/
 │ └── api.js # Fetch wrapper con interceptor Bearer token
-│
 └── utils/
 └── formatters.js # Formatos de fecha, normalización de estados
+
 server/
 ├── src/
 │ ├── config/
 │ │ └── db.js # Pool de conexiones MySQL (mysql2/promise)
-│ │
 │ ├── controllers/
 │ │ ├── authController.js # Login y generación de JWT
 │ │ ├── clientesController.js # CRUD de clientes
 │ │ ├── dashboardController.js # Estadísticas para el panel
 │ │ ├── leadsController.js # CRUD de leads y cambio de estado
-│ │ └── trabajosController.js # CRUD de trabajos, historial y estado
-│ │
+│ │ └── trabajosController.js # CRUD de trabajos, historial, observaciones y eliminación
 │ ├── middleware/
 │ │ ├── auth.js # Verificación de token JWT
-│ │ ├── rateLimit.js # Limitación de peticiones (placeholder)
+│ │ ├── rateLimit.js # Limitación de intentos de login (express-rate-limit)
 │ │ └── validaciones.js # Manejo de errores de express-validator
-│ │
 │ ├── models/
 │ │ └── LeadModel.js # Modelo de datos (si aplica)
-│ │
 │ └── routes/
 │ ├── authRoutes.js # POST /api/auth/login
 │ ├── clientesRoutes.js # GET/POST/PUT /api/clientes
 │ ├── dashboardRoutes.js # GET /api/dashboard/stats
 │ ├── leadsRoutes.js # GET/POST /api/leads, PUT estado
-│ └── trabajosRoutes.js # CRUD completo de trabajos + historial
-│
-├── .env.example # Variables de entorno de ejemplo
+│ └── trabajosRoutes.js # CRUD completo de trabajos + historial + eliminación de historial
+├── .env.example
 ├── database.sql # Script de creación de la base de datos
 ├── index.js # Punto de entrada del servidor
 └── package.json
@@ -169,19 +156,20 @@ Props opcionales: `icon`, `subtitle`
 
 ---
 
-## Objetivos alcanzados en esta fase
+## Funcionalidades implementadas
 
-- ✅ Landing page con formulario de contacto funcional (POST /api/leads)
+- ✅ Landing page con formulario de contacto funcional (`POST /api/leads`)
+- ✅ Chatbot interactivo con árbol de decisión integrado en la landing
 - ✅ Autenticación completa (login JWT, ruta protegida, logout)
-- ✅ Dashboard con KPIs desde API y fallback local
-- ✅ Gestión de contactos con tabs Leads/Clientes y cambio de estado
+- ✅ Bloqueo de login por intentos fallidos (rate limiting)
+- ✅ Dashboard con KPIs desde API (`/api/dashboard/stats`)
+- ✅ Gestión unificada de leads y clientes con pestañas y cambio de estado
+- ✅ Conversión automática de lead a cliente al cambiar a "Cerrado exitoso"
 - ✅ CRUD visual de trabajos con filtros y cambio de estado
-- ✅ Detalle de trabajo con historial y edición de precio
-- ✅ Detalle de cliente con lista de trabajos asociados
-- ✅ Configuración de precios con edición inline
+- ✅ Detalle de trabajo con historial de cambios, observaciones y edición de precio
+- ✅ Detalle de cliente con sus trabajos y creación de nuevo trabajo
 - ✅ Componentes reutilizables: KpiCard, Badge, DataTable, Button, Input, Card
-- ✅ Conexión a todos los endpoints disponibles del backend
-- ✅ Protección de rutas del panel admin con verificación de token
+- ✅ Protección de rutas del panel admin con verificación de token JWT
 
 ---
 
